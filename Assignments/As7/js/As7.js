@@ -13,88 +13,86 @@ Copyright [2019] by Hoang Do. All rights reserved. May be freely copied or excer
 //https://www.w3resource.com/javascript/form/non-empty-field.php
 //http://stackoverflow.com/questions/14347177/how-can-i-validate-that-the-max-field-is-greater-than-the-min-field
 
-$(function() {
-    //customized method for getting max value to be bigger than min value
+$(document).ready(function () {
+
     $.validator.addMethod("greaterThan", function(value, element, param) {
-        var $max = $(param);
-        if (this.settings.onfocusout) {
-            //once focus is on different element,execute validation
-            $max.off(".validate-greaterThan").on("blur.validate-greaterThan", function() {
-                $(element).valid();
-                //switch back to valid color if return valid
-            });
-        }
-        //determine if valid number before comparison
-        //this was done after value been ran thru number and float check
-        //however max hasnt gotten ran thru those tests for
-        //return true if min is smaller than max
-        return isNaN(parseInt($max.val())) || parseInt(value) >= parseInt($max.val());
+      var $max = $(param);
+      if (this.settings.onfocusout) {
+          //once focus is on different element,execute validation
+          $max.off(".validate-greaterThan").on("blur.validate-greaterThan", function() {
+              $(element).valid();
+              //switch back to valid color if return valid
+          });
+      }
+      //determine if valid number before comparison
+      //this was done after value been ran thru number and float check
+      //however max hasnt gotten ran thru those tests for
+      //return true if min is smaller than max
+      return isNaN(parseInt($max.val())) || parseInt(value) >= parseInt($max.val());
     }, "Ending value cannot be smaller than Starting value. Please try again.");
 
-    //customized method for getting min value to be smaller than max value
     $.validator.addMethod("lessThan", function(value, element, param) {
         var $min = $(param);
         if (this.settings.onfocusout) {
-            $min.off(".validate-lessThan").on("blur.validate-lessThan", function() {
-                $(element).valid();
-            });
-        }
-        //if the min input is a valid number, determine if max(value) is smaller than min
-        return isNaN(parseInt($min.val())) || parseInt(value) <= parseInt($min.val());
-        //console.log(value + " " + $min.val());
-    }, "Starting value cannot be greater than Ending value. Please try again.");
+              $min.off(".validate-lessThan").on("blur.validate-lessThan", function() {
+                  $(element).valid();
+              });
+          }
+          //if the min input is a valid number, determine if max(value) is smaller than min
+          return isNaN(parseInt($min.val())) || parseInt(value) <= parseInt($min.val());
+          //console.log(value + " " + $min.val());
+      }, "Starting value cannot be greater than Ending value. Please try again.");
 
-    //customized method for detecting float number
-    $.validator.addMethod("isInt", function(value, element) {
-        // calling function to check for float
-        return (isInt(Number(value))); //return true if is int and false if not
-    }, "Float detected. Please only use integers.");
 
-    //customized method for detecting oversized table, mainly to prevent browser freezing
-    $.validator.addMethod("tooBig", function(value, element, param) {
-        var $max = $(param);
-        if (this.settings.onfocusout) {
-            //once focus is on different element,execute validation
-            $max.off(".validate-tooBig").on("blur.validate-tooBig", function() {
-                $(element).valid();
-                //switch back to valid color if return valid
-            });
-        }
-        return isNaN(parseInt(value))|| isNaN(parseInt($max.val())) || (Math.abs(parseInt($max.val())) - Math.abs((parseInt(value)) > 100));
-    });
-    // Initialize form validation on the input form.
-    // It has the name attribute "input_form"
-    $("form[name='input_form']").validate({
-        // Specify validation rules
+      $.validator.addMethod("isInt", function(value, element) {
+          // calling function to check for float
+          return (isInt(Number(value))); //return true if is int and false if not
+      }, "Float detected. Please only use integers.");
+
+      //customized method for detecting oversized table, mainly to prevent browser freezing
+      $.validator.addMethod("tooBig", function(value, element, param) {
+          var $max = $(param);
+          if (this.settings.onfocusout) {
+              //once focus is on different element,execute validation
+              $max.off(".validate-tooBig").on("blur.validate-tooBig", function() {
+                  $(element).valid();
+                  //switch back to valid color if return valid
+              });
+          }
+          return isNaN(parseInt(value))|| isNaN(parseInt($max.val())) || (Math.abs(parseInt($max.val())) - Math.abs((parseInt(value)) > 100));
+      });
+
+
+    $('#input_form').validate({ // initialize the plugin
         rules: {
-            row_start: {
-                required: true, //required input
-                number: true, //has to be number
-                isInt: true, // has to be integer
-                lessThan: '#row_end', // min has to be smaller than max
-            },
-            col_start: {
-                required: true,
-                number: true,
-                isInt: true,
-                lessThan: '#col_end',
-            },
-            row_end: {
-                required: true,
-                number: true,
-                isInt: true,
-                greaterThan: '#row_start', //max has to be bigger than min
-                tooBig: '#row_start',
-            },
-            col_end: {
-                required: true,
-                number: true,
-                isInt: true,
-                greaterThan: '#col_start',
-                tooBig: '#col_start',
-            }
+          row_start: {
+              required: true, //required input
+              number: true, //has to be number
+              isInt: true, // has to be integer
+              lessThan: '#row_end', // min has to be smaller than max
+          },
+          col_start: {
+              required: true,
+              number: true,
+              isInt: true,
+              lessThan: '#col_end',
+          },
+          row_end: {
+              required: true,
+              number: true,
+              isInt: true,
+              greaterThan: '#row_start', //max has to be bigger than min
+              tooBig: '#row_start',
+          },
+          col_end: {
+              required: true,
+              number: true,
+              isInt: true,
+              greaterThan: '#col_start',
+              tooBig: '#col_start',
+          }
         },
-        // Specify validation error messages
+
         messages: {
             row_start: {
                 required: "Please enter the starting value for the horizontal axis.", //if no input,show this
@@ -116,7 +114,7 @@ $(function() {
             },
         },
         // Once the form is valid, take action i.e draw table
-        submitHandler: function(form) {
+        submitHandler: function (form) { // for demo
             generateTable();
         }
     });
