@@ -483,11 +483,11 @@ $.ajax({
 // The word: for a valid word
 // false   : for an invalid word
 function validateWord() {
-  var iRow,iCol , letter, errorCount, word = "", counter = [];
+  var iRow,iCol , letter, errorCount, word = "", counter = [], marker =[];
   counter[0] = 0;
   counter[1]= 0;
   counter [2] = 0;
-
+  errorCount = 0;
   // Read each letter from the board and append them to word string.
   for (iRow = 0; iRow < scrabbleBoard.rowCount; ++iRow) {
     for (iCol = 0; iCol < scrabbleBoard.columnCount; ++iCol) {
@@ -498,28 +498,24 @@ function validateWord() {
       } else {
         word += letter;
         counter[iRow]++;
+        marker[iRow] = iCol;
       }
     }
 
 
-// console.log(counter[0]);
-// console.log(counter[1]);
-// console.log(counter[2]);
-
-    if (counter[0] == 1 && counter[1] == 0 && counter[2] == 1) {
+    if (counter[0] == 1 && counter[1] == 0 && counter[2] == 1 || (counter[0] == 1 && counter[1] == 1 && counter[2] == 1 && (marker[0] != marker[1] || marker[1] != marker[2])) ||(counter[0] == 1 && counter[1] == 1 && counter[2] == 0 && marker[0] != marker[1]) || (counter[0] == 0 && counter[1] == 1 && counter[2] == 1 && marker[1] != marker[2]) ) {
+      errorCount = 10;
       break;
-
     } else if (counter[0] > 0 ||counter[1] > 0 || counter[2] > 0) {
-
       word = word.replace(/^\xB7+/, "");
       word = word.replace(/\xB7+$/, "");
     }
  }
 
+  if ((counter[0] == 1 && counter[1] == 1 && counter[2] == 0 && marker[0] == marker[1]) || (counter[0] == 0 && counter[1] == 1 && counter[2] == 1 && marker[1] == marker[2]) || (counter[0] == 1 && counter[1] == 1 && counter[2] == 1  && marker[0] == marker[1] && marker[1] == marker[2])){
+    word = word.replace(/\xB7/gi, "");
+  }
 
-  // Remove leading and trailing empty slot characters.
-  // word = word.replace(/^\xB7+/, "");
-  // word = word.replace(/\xB7+$/, "");
 
   $("#word").html(word);
 
