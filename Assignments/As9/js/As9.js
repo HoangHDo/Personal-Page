@@ -483,22 +483,43 @@ $.ajax({
 // The word: for a valid word
 // false   : for an invalid word
 function validateWord() {
-  var iCol, letter, errorCount, word = "", ROW = 0;
+  var iRow,iCol , letter, errorCount, word = "", counter = [];
+  counter[0] = 0;
+  counter[1]= 0;
+  counter [2] = 0;
 
   // Read each letter from the board and append them to word string.
-  for (iCol = 0; iCol < scrabbleBoard.columnCount; ++iCol) {
-    letter = scrabbleBoard.getLetterFromSlot(ROW, iCol);
-    if (typeof(letter) === "undefined") {
-      // Use special character to represent an empty slot.
-      word += "\xB7";  // middle dot character
-    } else {
-      word += letter;
+  for (iRow = 0; iRow < scrabbleBoard.rowCount; ++iRow) {
+    for (iCol = 0; iCol < scrabbleBoard.columnCount; ++iCol) {
+      letter = scrabbleBoard.getLetterFromSlot(iRow, iCol);
+      if (typeof(letter) === "undefined") {
+        // Use special character to represent an empty slot.
+        word += "\xB7";  // middle dot character
+      } else {
+        word += letter;
+        counter[iRow]++;
+      }
     }
-  }
+
+
+// console.log(counter[0]);
+// console.log(counter[1]);
+// console.log(counter[2]);
+
+    if (counter[0] == 1 && counter[1] == 0 && counter[2] == 1) {
+      break;
+
+    } else if (counter[0] > 0 ||counter[1] > 0 || counter[2] > 0) {
+
+      word = word.replace(/^\xB7+/, "");
+      word = word.replace(/\xB7+$/, "");
+    }
+ }
+
 
   // Remove leading and trailing empty slot characters.
-  word = word.replace(/^\xB7+/, "");
-  word = word.replace(/\xB7+$/, "");
+  // word = word.replace(/^\xB7+/, "");
+  // word = word.replace(/\xB7+$/, "");
 
   $("#word").html(word);
 
