@@ -65,7 +65,7 @@ scrabbleBoard.slots[0][5] = { "letterMultiplier": 1, "wordMultiplier": 1, "lette
 scrabbleBoard.slots[0][6] = { "letterMultiplier": 1, "wordMultiplier": 1, "letterMultiplier": 1, "image": "img/Scrabble_BlankSquare_81x87.jpg"};
 
 scrabbleBoard.slots[1] = [];
-scrabbleBoard.slots[1][0] = { "letterMultiplier": 1, "wordMultiplier": 2, "letterMultiplier": 1, "image": "img/double_letter.png"};
+scrabbleBoard.slots[1][0] = { "letterMultiplier": 2, "wordMultiplier": 1, "letterMultiplier": 1, "image": "img/double_letter.png"};
 scrabbleBoard.slots[1][1] = { "letterMultiplier": 1, "wordMultiplier": 1, "letterMultiplier": 1, "image": "img/Scrabble_BlankSquare_81x87.jpg"};
 scrabbleBoard.slots[1][2] = { "letterMultiplier": 1, "wordMultiplier": 1, "letterMultiplier": 1, "image": "img/Scrabble_BlankSquare_81x87.jpg"};
 scrabbleBoard.slots[1][3] = { "letterMultiplier": 1, "wordMultiplier": 3, "letterMultiplier": 1, "image": "img/triple_word.png"};
