@@ -9,8 +9,11 @@
 */
 // learnt from
 //https://jesseheines.com/~heines/91.461/91.461-2015-16f/461-assn/
+//https://medium.com/quick-code/simple-javascript-drag-drop-d044d8c5bed5
 //http://yongcho.github.io/GUI-Programming-1/assignment9.html
 //http://stackoverflow.com/questions/1527803/generating-random-numbers-in-javascript-in-a-specific-range
+//https://en.wikipedia.org/wiki/Scrabble
+//https://europeisnotdead.com/european-longest-words/
 
 "use strict";
 //Tile setup, and images
@@ -114,11 +117,6 @@ scrabbleScore.refresh = function() {
   var currentScore = scrabbleScore.calBS();
   $("#score").css("color", "red");
   $("#score").html(currentScore);
-  // if (currentScore > 0) {
-  //   $("#currentScore").css("color", "green");
-  // } else {
-  //   $("#currentScore").css("color", "red");
-  // }
 }
 
 // Add the score to the Total score and update new value
@@ -310,80 +308,62 @@ function submit() {
     }
     // Add tile image.
     $("#rack").append(newTile);
+    //Set score to 0
     $("#score").html(0);
-    // Apply CSS condition for the tile being on the rack. Apply CSS rule to this class to do minor position
-    // adjustment to the tile image in order to make it sit naturally on the rack background image.
+
+    // Add new css class that make the tile draggable
     newTile.addClass("tileRack");
 
-    // Make the tile draggable.
     newTile.draggable({
-      revertDuration: 200,  // msec
+      revertDuration: 400,
       start: function(event, ui) {
-        // Tile should be on top of everything else when being dragged.
+        // Tile will be on top of everything.
         $(this).css("z-index", 99);
-
-        // Revert option needs to be manually reset because it may be modified by droppables
-        // to force reverting after dropping has occured.
         $(this).draggable("option", "revert", "invalid");
       },
       stop: function() {
-        // Once finished dragging, revert the z-index.
+        // revert z back to original after Tile drag
         $(this).css("z-index", "");
       }
     });
   }
 
-  // Clear the current word display.
+  // Clear the word display after submit
   $("#word").html("");
 
-  // Clear the check marks next to the instruction texts as nothing has been played yet.
-  // checkSingleWord(false);
-  // checkTwoLettersAndMore(false);
-  // checkDictionary(false);
-
   if (totalTile() == 0) {
-    // We ran out of tiles to pickTile out. Disable moving on to the next word by switching 'next-word'
-    // button to 'finish' button.
+    // Run out of Tile, Display the message
     document.getElementById("submitWord").disabled = false;
     $("#messages").css("color", "green");
     document.getElementById("messages").innerHTML = "Congratulation! You finish the whole game!!"
   } else {
-    // Disable 'next Word' button initially. A valid word must be created in order to
-    // proceed to the next word.
     document.getElementById("submitWord").disabled = true;
   }
 }
 
-
-// Generates a unique string to be used as a tile ID. This function generates a unique string
-// as long as the page stays loaded.
+// Generates a unique string ID for tile.
 function generateTileId() {
   var id;
-
   generateTileId.id = ++generateTileId.id || 1;
   id = "tile" + generateTileId.id.toString();
-
   return id;
 }
 
-// Returns a random integer between min (inclusive) and max (inclusive).
-// Source:
+// Returns a random integer in a rang [min, max]
 function getRandomInt(min, max) {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
-// Checks if a string is a valid dictionary word.
-// Source: Student note on Piazza (https://piazza.com/class/icm9jynacvn5kx?cid=43)
-function isDictionaryWord(possibleWord) {
-  if (possibleWord.length > 0 && isDictionaryWord.dict[possibleWord]) {
+// Check the word spell in Dictionary
+function checkDict(wd) {
+  if (wd.length > 0 && checkDict.dict[wd]) {
     return true;
   }
-
   return false;
 }
 // The dictionary lookup object
-isDictionaryWord.dict = {};
-// Do an ajax request for the dictionary file.
+checkDict.dict = {};
+// Ajax request for Dictionary look up. Work only in web server.
 $.ajax({
   url: 'dictionary.txt',
   success: function(result) {
@@ -391,34 +371,26 @@ $.ajax({
     var words = result.split("\n");
 
     // Add them as properties to the dictionary lookup object.
-    // This will allow for fast lookups later. All words are converted to capital letters
-    // to make things simple since Scrabble is case insensitive.
     for (var i = 0; i < words.length; ++i) {
-      isDictionaryWord.dict[words[i].toUpperCase()] = true;
+      checkDict.dict[words[i].toUpperCase()] = true;
     }
   }
 });
 
-// Reads the letters on the board and checks if it is a valid Scrabble word.
-// Updates the page contents based on the validation result.
-// This function assumes we only have one horizontal line on the board. It needs to be
-// changed if we're going to upgrade to 2D board.
-// Returns
-// The word: for a valid word
-// false   : for an invalid word
+// Test the word valid before the submit button enable to click.
 function testWord() {
-  var eRow,eCol , letter, errorCount, word = "", counter = [], marker =[];
+  var eRow, eCol , letter, errorCount, word = "", counter = [], marker =[];
+  //counter letter for each row
   counter[0] = 0;
-  counter[1]= 0;
-  counter [2] = 0;
+  counter[1] = 0;
+  counter[2] = 0;
   errorCount = 0;
-  // Read each letter from the board and append them to word string.
+  // Add all the leter from the board to the word. Empty will be replace with "."
   for (eRow = 0; eRow < 3; ++eRow) {
     for (eCol = 0; eCol < 7; ++eCol) {
       letter = scrabbleBoard.getLetter(eRow, eCol);
       if (typeof(letter) === "undefined") {
-        // Use special character to represent an empty slot.
-        word += "\xB7";  // middle dot character
+        word += "\xB7";
       } else {
         word += letter;
         counter[eRow]++;
@@ -426,7 +398,7 @@ function testWord() {
       }
     }
 
-
+    //Check if those letter in the board sit next to each others, in one line (vertical or horizontal). Trim all the dots at the begining and at the end of the word
     if (counter[0] == 1 && counter[1] == 0 && counter[2] == 1 || (counter[0] == 1 && counter[1] == 1 && counter[2] == 1 && (marker[0] != marker[1] || marker[1] != marker[2])) ||(counter[0] == 1 && counter[1] == 1 && counter[2] == 0 && marker[0] != marker[1]) || (counter[0] == 0 && counter[1] == 1 && counter[2] == 1 && marker[1] != marker[2]) ) {
       errorCount = 10;
       break;
@@ -439,54 +411,42 @@ function testWord() {
     }
  }
 
+  //If the letter is in one line (vertical), trim all the dots between two letter
   if ((counter[0] == 1 && counter[1] == 1 && counter[2] == 0 && marker[0] == marker[1]) || (counter[0] == 0 && counter[1] == 1 && counter[2] == 1 && marker[1] == marker[2]) || (counter[0] == 1 && counter[1] == 1 && counter[2] == 1  && marker[0] == marker[1] && marker[1] == marker[2])){
     word = word.replace(/\xB7/gi, "");
   }
 
-
-
+  //Display the word in html
   $("#word").html(word);
 
-  // Now let's check for any errors in the word. Update the page contents as we check each condition.
-
-
-  // Check if we have anything on the board.
+  // Check if the board is empty
   if (word == "") {
     checkSingleWord(false);
     errorCount = 8;
   } else {
-    // Check if there is a gap within letters. Gap is not allowed.
-    var rgxDisconnectedWord = new RegExp("[A-Z_]\xB7+[A-Z_]");
-    if (rgxDisconnectedWord.test(word)) {
-      // checkSingleWord(false);
+    // Check for the gap between two letter (horizontal and vertical)
+    var gapWord = new RegExp("[A-Z_]\xB7+[A-Z_]");
+    if (gapWord.test(word)) {
       errorCount = 10;
-    } else {
-      // checkSingleWord(true);
     }
   }
 
-  // Check if the word has at least 2 letters. Words with one letter may show up in an English dictinonary
-  // but are not allowed in Scrabble.
-  if (word.length > 1 && word.length < 21) {
-    // checkTwoLettersAndMore(true);
-  } else {
-    // checkTwoLettersAndMore(false);
+  // Check if the word is at least two letters
+  if (word.length <= 1 || word.length == 21) {
     errorCount = 6;
   }
 
-  // Check if the word shows up in our dictionary.
+  // Check if the word is valid in Dictionary
   if(errorCount == 0) {
-    if (isDictionaryWord(word)) {
-      // checkDictionary(true);
-    } else {
-      // checkDictionary(false);
+    if (!checkDict(word)) {
       errorCount = 7;
     }
   }
 
+  //Display the message corresponding to the errors
   if (errorCount == 0){
-      $("#messages").css("color", "green");
-      document.getElementById("messages").innerHTML = "Word is valid";
+    $("#messages").css("color", "green");
+    document.getElementById("messages").innerHTML = "Word is valid";
   }else if (errorCount == 6) {
     $("#messages").css("color", "red");
     document.getElementById("messages").innerHTML = "Need at least 2 letters to make a word";
@@ -504,6 +464,7 @@ function testWord() {
     document.getElementById("messages").innerHTML = "Letter need to place next to each other!";
   }
 
+  //iF there is an error, can not submit the word
   if (errorCount) {
     document.getElementById("submitWord").disabled = true;
     $("#word").css("color", "red");
@@ -513,118 +474,40 @@ function testWord() {
   $("#word").css("color", "green");
   document.getElementById("submitWord").disabled = false;
 
-  if (errorCount == 0){
-      $("#messages").css("color", "green");
-      document.getElementById("messages").innerHTML = "Word is valid";
-  }else if (errorCount == 6) {
-    $("#messages").css("color", "red");
-    document.getElementById("messages").innerHTML = "Need at least 2 letters";
-  }else if (errorCount == 7) {
-    $("#messages").css("color", "red");
-    document.getElementById("messages").innerHTML = "Word is not in Dictionary. Please try another one!";
-  }else if (errorCount == 8) {
-    $("#messages").css("color", "red");
-    document.getElementById("messages").innerHTML = "Nothing in the board!!";
-  }else if (errorCount == 9) {
-    $("#messages").css("color", "red");
-    document.getElementById("messages").innerHTML = "Word should be in a line";
-  }else if (errorCount == 10) {
-    $("#messages").css("color", "red");
-    document.getElementById("messages").innerHTML = "Letter need to place next to each other!";
-  }
   return word;
 }
 
-// Make a jQuery object grayscale and semi-transparent making it look like it's 'deactivated'.
-// CSS source: http://blog.nmsdvid.com/css-filter-property/
-// function grayscaleAndFade(jQueryObject, yes) {
-//   if (yes) {
-//     jQueryObject.css({
-//       "-webkit-filter": "grayscale(100%)",
-//       "-moz-filter": "grayscale(100%)",
-//       "-o-filter": "grayscale(100%)",
-//       "-ms-filter": "grayscale(100%)",
-//       "filter": "grayscale(100%)",
-//       "opacity": 0.2
-//     });
-//   } else {
-//     jQueryObject.css({
-//       "-webkit-filter": "",
-//       "-moz-filter": "",
-//       "-o-filter": "",
-//       "-ms-filter": "",
-//       "filter": "",
-//       "opacity": 1.0
-//     });
-//   }
-// }
-
-// Following three functions toggle the check (v) icon next to each instruction message on or off.
-// function checkTwoLettersAndMore(check) {
-//   if (check) {
-//     grayscaleAndFade($("#minLengthIcon"), false);
-//   } else {
-//     grayscaleAndFade($("#minLengthIcon"), true);
-//   }
-// }
-//
-// function checkSingleWord(check) {
-//   if (check) {
-//     grayscaleAndFade($("#oneWordCheckIcon"), false);
-//   } else {
-//     grayscaleAndFade($("#oneWordCheckIcon"), true);
-//   }
-// }
-//
-// function checkDictionary(check) {
-//   if (check) {
-//     grayscaleAndFade($("#dictionaryCheckIcon"), false);
-//   } else {
-//     grayscaleAndFade($("#dictionaryCheckIcon"), true);
-//   }
-// }
-
-// Opens up a dialog box asking to pick a letter for the blank tile played. When the user picks the letter,
-// replaces the "letter" attribute of the blank tile draggable with the selected letter and then
-// does everything else that needs to be done when a tile draggable is dropped on the board.
-// Argument:
-// blankTileDroppable: jQuery draggable blank tile object that was just dropped
-// tileId: DOM ID of the above droppable element
-// row, col: position on the board where the tile is dropped
-function openBlankTileDialog(blankTileDraggable, tileId, row, col) {
-  var tileSelectorDialog = $("<div id='blankTileDialog'></div>");
+//Blank Tile box open to choose a Tile
+function blankTile(bTileChoose, tileId, row, col) {
+  var tileSelect = $("<div id='blankTileDialog'></div>");
   var letterKey, newTile;
   for (letterKey in scrabbleTiles) {
     if (letterKey != "_") {
-      // Add each tile image into the dialog so the user can click it to select the letter.
+      // Add all tiles image to the box
       newTile = $("<img src='" + scrabbleTiles[letterKey]["image"] + "' class='tileBox' letter='" + letterKey + "'>");
 
-      // Register click event to the image. This callback must make sure everything gets processed
-      // with the selected letter as if it was played normally.
+      // Click event to choose a tile in the box
       newTile.click(function() {
         var newLetter = $(this).attr("letter");
 
-        // Replace the letter attribute and the image source of the draggable tile img.
-        blankTileDraggable.attr("letter", newLetter);
-        blankTileDraggable.attr("src", scrabbleTiles[newLetter]["image"]);
+        // Replace the image of the chosen tile to the blank
+        bTileChoose.attr("letter", newLetter);
+        bTileChoose.attr("src", scrabbleTiles[newLetter]["image"]);
 
-        // Update the board data structure.
-        tileId = blankTileDraggable.attr("id");
+        // Replace the tile ID
+        tileId = bTileChoose.attr("id");
         scrabbleBoard.addTile(tileId, newLetter, row, col);
 
-        // Validate and display the word we have so far.
         testWord();
-
-        // Update the score with the selected letter.
         scrabbleScore.refresh();
-
-        tileSelectorDialog.dialog("close");
+        //close the box
+        tileSelect.dialog("close");
       });
-      tileSelectorDialog.append(newTile);
+      tileSelect.append(newTile);
     }
   }
-  tileSelectorDialog.css("z-index", 100);
-  tileSelectorDialog.dialog({
+  tileSelect.css("z-index", 100);
+  tileSelect.dialog({
     modal: true,
     draggable: false,
     resizable: false
@@ -634,27 +517,25 @@ function openBlankTileDialog(blankTileDraggable, tileId, row, col) {
 
 $(window).on('load', function() {
   var row, col;
-
+  //make the scrabbleBoard
   scrabbleBoard.makeBoard();
 
-  // Make the board slots droppable.
+  // make the board droppable
   $(".boardSlot").droppable({
-    // This function determines whether the slot gets highlighted as an acceptable dropping zone
-    // when a tile is being dragged.
+
     accept: function(draggable) {
       var row, col;
-
       row = $(this).attr("row");
       col = $(this).attr("col");
 
       if (scrabbleBoard.tileID(row, col) === draggable.attr("id")) {
-        // The tile should be allowed to drop back in to the slot it was lifted out of.
+        // The tile will go back to the slot in a current range
         return true;
       } else if (scrabbleBoard.isAvailable(row, col)) {
-        // The slot is empty.
+        // The slot is available
         return true;
       } else {
-        // The slot is already occupied.
+        // The slot is not available
         return false;
       }
     },
@@ -672,36 +553,24 @@ $(window).on('load', function() {
       letter = ui.draggable.attr("letter");
       tileId = ui.draggable.attr("id");
 
-      // Make the dropped tile snap to the board image.
-      // TODO: I think there is a built-in jQuery UI way of doing this.
       $(ui.draggable).css("top", "");
       $(ui.draggable).css("left", "");
       $(this).append(ui.draggable);
 
-      console.log("Dropped " + letter + " (" + tileId + ") on (" + row + ", " + col + ").");
-
-      // When a blank tile is first placed on the board, open up a dialog and let the user
-      // pick a letter for the blank tile. Otherwise move on.
+      // Open the box to choose tile when blank tile is place on the board.
       previousPositionOnBoard = scrabbleBoard.findSlotFromTileId(tileId);
       if ($(ui.draggable).hasClass("blankTile") && !previousPositionOnBoard) {
-        // var newLetter = openBlankTileDialog();  // NOT POSSIBLE
-        // We cannot have this function return the new letter selected from the dialog because
-        // there is no way to make a blocking dialog. Everything that needs to happen
-        // after the user picks the letter for the blank tile must happen in some kind of
-        // callback function supplied to the dialog.
-        openBlankTileDialog($(ui.draggable), tileId, row, col);
+
+        blankTile($(ui.draggable), tileId, row, col);
       } else {
         scrabbleBoard.addTile(tileId, letter, row, col);
-        // Validate and display the word we have so far.
         testWord();
-
-        // Calculate the score and update the page.
         scrabbleScore.refresh();
       }
     }
   });
 
-  // Make the rack droppable so the tiles can be moved from the board to the rack.
+  // Make the rack draggable and droppable
   $("#rack").droppable({
     activeClass: "dragh",
     hoverClass: "hovertile",
@@ -712,8 +581,7 @@ $(window).on('load', function() {
       ui.draggable.removeClass("tileBoard");
       ui.draggable.addClass("tileRack");
 
-      // When a blank tile comes back on to the rack, change its image back to the
-      // blank tile image.
+      // Change a blank tile back to blank when it move out the board to the rack
       if ($(ui.draggable).hasClass("blankTile")) {
         $(ui.draggable).attr("src", scrabbleTiles["_"]["image"]);
       }
@@ -721,26 +589,21 @@ $(window).on('load', function() {
       tileId = ui.draggable.attr("id");
       pos = scrabbleBoard.findSlotFromTileId(tileId);
       if (pos) {
-        // The tile came from the board. Mark it off the board data structure.
-        scrabbleBoard.deleteFromSlot(pos[0], pos[1]);  // pos[0]: row, pos[1]: column
+        // Remove the mark of the tile move off the board
+        scrabbleBoard.deleteFromSlot(pos[0], pos[1]);
 
         // Snap the tile image to the back of the rack.
         $("#rack").append(ui.draggable);
         ui.draggable.css({"position": "relative", "top": "", "left": ""});
 
-        // Validate and display the word we have so far.
         word = testWord();
-
-        // Calculate the score and update the page.
         scrabbleScore.refresh();
       } else {
-        // User grabbed the tile and put it right back on the rack. Use the revert function
-        // to put the tile in the same spot it came out of.
+        // Tile go to the end of the rack when it come back from the board
         ui.draggable.draggable("option", "revert", true);
       }
     }
   });
-
-  // Set the board and tiles. Start the first word.
+  //start the game
   restart();
 });
