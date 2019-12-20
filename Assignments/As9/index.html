@@ -20,7 +20,6 @@
     <!-- CSS for jqueryui-->
     <link href="https://code.jquery.com/ui/jquery-ui-git.css" rel="stylesheet">
 
-
     <!-- Custom CSS -->
     <link rel="stylesheet" href="css/style.css">
     <!-- scripts jquery and jqueryui
@@ -45,6 +44,7 @@
         <!-- brief description and instructions-->
         <p> Drag the letters from the rack to the Scrabble strip to make an English word. At least 2 or more letters. </p>
 
+        <!-- Score panel, including Word in the board, score, total score and remaining tiles-->
         <div class="ScoreBoard">
             Word: <span id="word">____</span>
             <div class="divider"></div>
@@ -55,9 +55,8 @@
             Remain tiles: <span id="remainingTiles">0</span>
         </div>
 
-
         <hr>
-        <!--  Display the message when user submit the word -->
+        <!--  Display the message before user submit the word -->
         <span id="messages"></span>
 
         <hr>
@@ -81,7 +80,6 @@
     <footer>
         <br>Copyright 2019 by Hoang Do.
     </footer>
-
 
 </body>
 </html>
