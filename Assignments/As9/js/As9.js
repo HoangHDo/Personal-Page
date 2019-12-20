@@ -287,11 +287,11 @@ function restart() {
 
   scrabbleScore.restart();
 
-  Submit();
+  submit();
 }
 
 // Add the score to the total score, remove all the tile from the board. Refill random tiles from the deck to the rack
-function Submit() {
+function submit() {
   var i, key, tileImageId, newTile, pickTile;
 
   scrabbleScore.commit();
