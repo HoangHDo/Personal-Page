@@ -56,31 +56,31 @@ var scrabbleBoard = {};
 // https://teaching.cs.uml.edu/~heines/91.461/91.461-2015-16f/461-assn/ImplementingScrabble-v01.jsp.
 scrabbleBoard.slots = [];
 scrabbleBoard.slots[0] = [];
-scrabbleBoard.slots[0][0] = { "letterMultiplier": 1, "wordMultiplier": 1, "letterMultiplier": 1, "image": "img/Scrabble_BlankSquare_81x87.jpg"};
-scrabbleBoard.slots[0][1] = { "letterMultiplier": 1, "wordMultiplier": 2, "letterMultiplier": 1, "image": "img/double_word.png"};
-scrabbleBoard.slots[0][2] = { "letterMultiplier": 1, "wordMultiplier": 1, "letterMultiplier": 1, "image": "img/Scrabble_BlankSquare_81x87.jpg"};
-scrabbleBoard.slots[0][3] = { "letterMultiplier": 1, "wordMultiplier": 1, "letterMultiplier": 1, "image": "img/Scrabble_BlankSquare_81x87.jpg"};
-scrabbleBoard.slots[0][4] = { "letterMultiplier": 1, "wordMultiplier": 1, "letterMultiplier": 1, "image": "img/Scrabble_BlankSquare_81x87.jpg"};
-scrabbleBoard.slots[0][5] = { "letterMultiplier": 1, "wordMultiplier": 1, "letterMultiplier": 3, "image": "img/triple_letter.png"};
-scrabbleBoard.slots[0][6] = { "letterMultiplier": 1, "wordMultiplier": 1, "letterMultiplier": 1, "image": "img/Scrabble_BlankSquare_81x87.jpg"};
+scrabbleBoard.slots[0][0] = { "wordMultiplier": 1, "letterMultiplier": 1, "image": "img/Scrabble_BlankSquare_81x87.jpg"};
+scrabbleBoard.slots[0][1] = { "wordMultiplier": 2, "letterMultiplier": 1, "image": "img/double_word.png"};
+scrabbleBoard.slots[0][2] = { "wordMultiplier": 1, "letterMultiplier": 1, "image": "img/Scrabble_BlankSquare_81x87.jpg"};
+scrabbleBoard.slots[0][3] = { "wordMultiplier": 1, "letterMultiplier": 1, "image": "img/Scrabble_BlankSquare_81x87.jpg"};
+scrabbleBoard.slots[0][4] = { "wordMultiplier": 1, "letterMultiplier": 1, "image": "img/Scrabble_BlankSquare_81x87.jpg"};
+scrabbleBoard.slots[0][5] = { "wordMultiplier": 1, "letterMultiplier": 3, "image": "img/triple_letter.png"};
+scrabbleBoard.slots[0][6] = { "wordMultiplier": 1, "letterMultiplier": 1, "image": "img/Scrabble_BlankSquare_81x87.jpg"};
 
 scrabbleBoard.slots[1] = [];
-scrabbleBoard.slots[1][0] = { "letterMultiplier": 2, "wordMultiplier": 1, "letterMultiplier": 1, "image": "img/double_letter.png"};
-scrabbleBoard.slots[1][1] = { "letterMultiplier": 1, "wordMultiplier": 1, "letterMultiplier": 1, "image": "img/Scrabble_BlankSquare_81x87.jpg"};
-scrabbleBoard.slots[1][2] = { "letterMultiplier": 1, "wordMultiplier": 1, "letterMultiplier": 1, "image": "img/Scrabble_BlankSquare_81x87.jpg"};
-scrabbleBoard.slots[1][3] = { "letterMultiplier": 1, "wordMultiplier": 3, "letterMultiplier": 1, "image": "img/triple_word.png"};
-scrabbleBoard.slots[1][4] = { "letterMultiplier": 1, "wordMultiplier": 1, "letterMultiplier": 1, "image": "img/Scrabble_BlankSquare_81x87.jpg"};
-scrabbleBoard.slots[1][5] = { "letterMultiplier": 1, "wordMultiplier": 1, "letterMultiplier": 1, "image": "img/Scrabble_BlankSquare_81x87.jpg"};
-scrabbleBoard.slots[1][6] = { "letterMultiplier": 1, "wordMultiplier": 1, "letterMultiplier": 1, "image": "img/Scrabble_BlankSquare_81x87.jpg"};
+scrabbleBoard.slots[1][0] = { "wordMultiplier": 1, "letterMultiplier": 2, "image": "img/double_letter.png"};
+scrabbleBoard.slots[1][1] = { "wordMultiplier": 1, "letterMultiplier": 1, "image": "img/Scrabble_BlankSquare_81x87.jpg"};
+scrabbleBoard.slots[1][2] = { "wordMultiplier": 1, "letterMultiplier": 1, "image": "img/Scrabble_BlankSquare_81x87.jpg"};
+scrabbleBoard.slots[1][3] = { "wordMultiplier": 3, "letterMultiplier": 1, "image": "img/triple_word.png"};
+scrabbleBoard.slots[1][4] = { "wordMultiplier": 1, "letterMultiplier": 1, "image": "img/Scrabble_BlankSquare_81x87.jpg"};
+scrabbleBoard.slots[1][5] = { "wordMultiplier": 1, "letterMultiplier": 1, "image": "img/Scrabble_BlankSquare_81x87.jpg"};
+scrabbleBoard.slots[1][6] = { "wordMultiplier": 1, "letterMultiplier": 1, "image": "img/Scrabble_BlankSquare_81x87.jpg"};
 
 scrabbleBoard.slots[2] = [];
-scrabbleBoard.slots[2][0] = { "letterMultiplier": 1, "wordMultiplier": 1, "letterMultiplier": 1, "image": "img/Scrabble_BlankSquare_81x87.jpg"};
-scrabbleBoard.slots[2][1] = { "letterMultiplier": 1, "wordMultiplier": 3, "letterMultiplier": 1, "image": "img/triple_word.png"};
-scrabbleBoard.slots[2][2] = { "letterMultiplier": 1, "wordMultiplier": 1, "letterMultiplier": 1, "image": "img/Scrabble_BlankSquare_81x87.jpg"};
-scrabbleBoard.slots[2][3] = { "letterMultiplier": 1, "wordMultiplier": 1, "letterMultiplier": 1, "image": "img/Scrabble_BlankSquare_81x87.jpg"};
-scrabbleBoard.slots[2][4] = { "letterMultiplier": 1, "wordMultiplier": 1, "letterMultiplier": 1, "image": "img/Scrabble_BlankSquare_81x87.jpg"};
-scrabbleBoard.slots[2][5] = { "letterMultiplier": 1, "wordMultiplier": 1, "letterMultiplier": 3, "image": "img/triple_letter.png"};
-scrabbleBoard.slots[2][6] = { "letterMultiplier": 1, "wordMultiplier": 1, "letterMultiplier": 1, "image": "img/Scrabble_BlankSquare_81x87.jpg"};
+scrabbleBoard.slots[2][0] = { "wordMultiplier": 1, "letterMultiplier": 1, "image": "img/Scrabble_BlankSquare_81x87.jpg"};
+scrabbleBoard.slots[2][1] = { "wordMultiplier": 3, "letterMultiplier": 1, "image": "img/triple_word.png"};
+scrabbleBoard.slots[2][2] = { "wordMultiplier": 1, "letterMultiplier": 1, "image": "img/Scrabble_BlankSquare_81x87.jpg"};
+scrabbleBoard.slots[2][3] = { "wordMultiplier": 1, "letterMultiplier": 1, "image": "img/Scrabble_BlankSquare_81x87.jpg"};
+scrabbleBoard.slots[2][4] = { "wordMultiplier": 1, "letterMultiplier": 1, "image": "img/Scrabble_BlankSquare_81x87.jpg"};
+scrabbleBoard.slots[2][5] = { "wordMultiplier": 1, "letterMultiplier": 3, "image": "img/triple_letter.png"};
+scrabbleBoard.slots[2][6] = { "wordMultiplier": 1, "letterMultiplier": 1, "image": "img/Scrabble_BlankSquare_81x87.jpg"};
 
 scrabbleBoard.rowCount = Object.keys(scrabbleBoard.slots).length;
 scrabbleBoard.columnCount = Object.keys(scrabbleBoard.slots[0]).length;
@@ -375,7 +375,7 @@ function Submit() {
     }
     // Add tile image.
     $("#rack").append(newTile);
-
+    $("#score").html(0);
     // Apply CSS condition for the tile being on the rack. Apply CSS rule to this class to do minor position
     // adjustment to the tile image in order to make it sit naturally on the rack background image.
     newTile.addClass("letterTileOnRack");
