@@ -104,11 +104,15 @@ button:hover {
 #rack {
     width: 720px;
     height: 177px;
-
     text-align: center;
     background-image: url("../img/rack.png");
     background-repeat: no-repeat;
     padding-bottom: 20px;
+}
+
+#messages{
+    font-size: 20px;
+    font-weight: bold;
 }
 .letterTile {
     border-radius: 4px;
@@ -132,7 +136,6 @@ button:hover {
 }
 
 .letterTileInDialog:hover {
-    cursor: pointer;
     box-shadow: 0px 0px 5px blue;
 }
 
@@ -143,10 +146,4 @@ button:hover {
 
 .hoverHighlight {
     box-shadow: 0px 0px 15px blue;
-}
-
-/* Hide the title bar the blank tile dialog. The dialog should only close when
-the user clicks one of the tile images. */
-.ui-dialog-titlebar {
-    display: none;
 }

@@ -86,7 +86,7 @@ scrabbleBoard.rowCount = Object.keys(scrabbleBoard.slots).length;
 scrabbleBoard.columnCount = Object.keys(scrabbleBoard.slots[0]).length;
 
 // Globals to track current score.
-var scrabbleScore = { "totalScore": 0};
+var scrabbleScore = { "totalScore": 0, "score": 0};
 
 // Calculates and returns the score for the tiles currently on the board.
 // Yes. This algorithm will need to change if we decide to implement multiple rows.
@@ -122,7 +122,7 @@ scrabbleScore.refresh = function() {
   var boardScore = scrabbleScore.calculateBoardScore();
 
   $("#score").css("color", TEXT_COLOR_NORMAL);
-  $("#score").html(scrabbleScore.totalScore + " (+<span id='boardScore'>" + boardScore + "</span>)");
+  $("#score").html(boardScore);
   if (boardScore > 0) {
     $("#boardScore").css("color", TEXT_COLOR_ACTIVE);
   } else {
@@ -136,9 +136,9 @@ scrabbleScore.commit = function() {
   var boardScore = scrabbleScore.calculateBoardScore();
 
   scrabbleScore.totalScore += boardScore;
-  $("#score").html(scrabbleScore.totalScore);
+  $("#tScore").html(scrabbleScore.totalScore);
   if (scrabbleScore.totalScore > 0) {
-    $("#score").css("color", TEXT_COLOR_ACTIVE);
+    $("#tScore").css("color", TEXT_COLOR_ACTIVE);
   }
 }
 
@@ -506,6 +506,9 @@ function validateWord() {
     if (counter[0] == 1 && counter[1] == 0 && counter[2] == 1 || (counter[0] == 1 && counter[1] == 1 && counter[2] == 1 && (marker[0] != marker[1] || marker[1] != marker[2])) ||(counter[0] == 1 && counter[1] == 1 && counter[2] == 0 && marker[0] != marker[1]) || (counter[0] == 0 && counter[1] == 1 && counter[2] == 1 && marker[1] != marker[2]) ) {
       errorCount = 10;
       break;
+    } else if ((counter[0] > 1 && (counter[1] > 0 || counter[2] > 0)) || (counter[1] > 1 && (counter[0] > 0 || counter[2] > 0)) || (counter[2] > 1 && (counter[0] > 0 || counter[1] > 0))) {
+      errorCount = 9;
+      break;
     } else if (counter[0] > 0 ||counter[1] > 0 || counter[2] > 0) {
       word = word.replace(/^\xB7+/, "");
       word = word.replace(/\xB7+$/, "");
@@ -517,21 +520,22 @@ function validateWord() {
   }
 
 
+
   $("#word").html(word);
 
   // Now let's check for any errors in the word. Update the page contents as we check each condition.
-  errorCount = 0;
+
 
   // Check if we have anything on the board.
   if (word == "") {
     checkSingleWord(false);
-    ++errorCount;
+    errorCount = 8;
   } else {
     // Check if there is a gap within letters. Gap is not allowed.
     var rgxDisconnectedWord = new RegExp("[A-Z_]\xB7+[A-Z_]");
     if (rgxDisconnectedWord.test(word)) {
       checkSingleWord(false);
-      ++errorCount;
+      errorCount = 10;
     } else {
       checkSingleWord(true);
     }
@@ -539,19 +543,48 @@ function validateWord() {
 
   // Check if the word has at least 2 letters. Words with one letter may show up in an English dictinonary
   // but are not allowed in Scrabble.
-  if (word.length >= 2) {
+  if (word.length > 1 && word.length < 21) {
     checkTwoLettersAndMore(true);
   } else {
     checkTwoLettersAndMore(false);
-    ++errorCount;
+    errorCount = 6;
   }
 
   // Check if the word shows up in our dictionary.
-  if (isDictionaryWord(word)) {
-    checkDictionary(true);
-  } else {
-    checkDictionary(false);
-    ++errorCount;
+  if(errorCount == 0) {
+    if (isDictionaryWord(word)) {
+      checkDictionary(true);
+    } else {
+      checkDictionary(false);
+      errorCount = 7;
+    }
+  }
+
+  console.log(errorCount);
+  if (errorCount == 0){
+      $("#messages").css("color", TEXT_COLOR_ACTIVE);
+      document.getElementById("messages").innerHTML = "Word is valid";
+      console.log("Here0");
+  }else if (errorCount == 6) {
+    $("#messages").css("color", TEXT_COLOR_INVALID);
+    document.getElementById("messages").innerHTML = "Need at least 2 letters to make a word";
+    console.log("Here6");
+  }else if (errorCount == 7) {
+    $("#messages").css("color", TEXT_COLOR_INVALID);
+    document.getElementById("messages").innerHTML = "Word is not in Dictionary. Please try another one!";
+    console.log("Here7");
+  }else if (errorCount == 8) {
+    $("#messages").css("color", TEXT_COLOR_INVALID);
+    document.getElementById("messages").innerHTML = "Nothing in the board!!";
+    console.log("Here8");
+  }else if (errorCount == 9) {
+    $("#messages").css("color", TEXT_COLOR_INVALID);
+    document.getElementById("messages").innerHTML = "Word should be in a line";
+    console.log("Here9");
+  }else if (errorCount == 10) {
+    $("#messages").css("color", TEXT_COLOR_INVALID);
+    document.getElementById("messages").innerHTML = "Letter need to place next to each other!";
+    console.log("Here10");
   }
 
   if (errorCount) {
@@ -562,6 +595,26 @@ function validateWord() {
 
   $("#word").css("color", TEXT_COLOR_ACTIVE);
   document.getElementById("submitWord").disabled = false;
+
+  if (errorCount == 0){
+      $("#messages").css("color", TEXT_COLOR_ACTIVE);
+      document.getElementById("messages").innerHTML = "Word is valid";
+  }else if (errorCount == 6) {
+    $("#messages").css("color", TEXT_COLOR_INVALID);
+    document.getElementById("messages").innerHTML = "Need at least 2 letters";
+  }else if (errorCount == 7) {
+    $("#messages").css("color", TEXT_COLOR_INVALID);
+    document.getElementById("messages").innerHTML = "Word is not in Dictionary. Please try another one!";
+  }else if (errorCount == 8) {
+    $("#messages").css("color", TEXT_COLOR_INVALID);
+    document.getElementById("messages").innerHTML = "Nothing in the board!!";
+  }else if (errorCount == 9) {
+    $("#messages").css("color", TEXT_COLOR_INVALID);
+    document.getElementById("messages").innerHTML = "Word should be in a line";
+  }else if (errorCount == 10) {
+    $("#messages").css("color", TEXT_COLOR_INVALID);
+    document.getElementById("messages").innerHTML = "Letter need to place next to each other!";
+  }
   return word;
 }
 
