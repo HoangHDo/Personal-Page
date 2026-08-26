@@ -1,75 +1,930 @@
 <!DOCTYPE html>
-<!--
-        Name: Hoang Do
-        Email: Hoang_Do@student.uml.edu
-        Major:Computer Science, School : UMass Lowell, Class:   91.61 GUI Programming I
-        Date created: Oct 1,2019
-        A4: Styling Your First Web Page With CSS  
-        Description: Made several changes in CSS and add a button to go to other Assignments
-        Copyright [2019] by Hoang Do. All rights reserved. May be freely copied or excerpted for educational purposes with credit to the author. -->
 <html lang="en">
-
 <head>
-    <!-- Tittle text-->
-    <title>Hoang's Page</title>
-    <!--  Meta tags -->
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <!-- Custom CSS -->
-    <link rel="stylesheet" href="css/style.css">
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>CyberStream — Tesla YouTube Player</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://www.youtube.com/iframe_api"></script>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=JetBrains+Mono:wght@400;600&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+<style>
+  :root{
+    --bg:#070710;
+    --bg-elev:#0f0f1a;
+    --bg-card:#15151f;
+    --fg:#f2f2f7;
+    --muted:#6b6b80;
+    --accent:#ff2d4d;
+    --accent-2:#ff6b3d;
+    --accent-glow:rgba(255,45,77,.45);
+    --border:rgba(255,255,255,.07);
+    --grid:rgba(255,255,255,.025);
+    --ok:#22e08a;
+    --warn:#ffcb3d;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    background:var(--bg);
+    color:var(--fg);
+    font-family:'Inter',sans-serif;
+    overflow:hidden;
+    -webkit-tap-highlight-color:transparent;
+  }
+  .font-display{font-family:'Orbitron',sans-serif;letter-spacing:.06em}
+  .font-mono{font-family:'JetBrains Mono',monospace}
+
+  /* Ambient background */
+  .cyber-grid{
+    background-image:
+      linear-gradient(var(--grid) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+    background-size:48px 48px;
+  }
+  .blob{
+    position:absolute;border-radius:50%;
+    filter:blur(90px);opacity:.18;pointer-events:none;
+    animation:float 22s ease-in-out infinite;
+  }
+  @keyframes float{
+    0%,100%{transform:translate(0,0) scale(1)}
+    50%{transform:translate(40px,-30px) scale(1.1)}
+  }
+
+  .glass{
+    background:rgba(15,15,26,.78);
+    backdrop-filter:blur(18px);
+    -webkit-backdrop-filter:blur(18px);
+    border:1px solid var(--border);
+  }
+  .accent-glow{box-shadow:0 0 24px var(--accent-glow),0 0 60px rgba(255,45,77,.18)}
+  .btn-primary{
+    background:linear-gradient(135deg,var(--accent),var(--accent-2));
+    color:#fff;
+    transition:transform .15s, box-shadow .2s;
+  }
+  .btn-primary:hover{transform:translateY(-1px);box-shadow:0 0 22px var(--accent-glow)}
+  .btn-primary:active{transform:translateY(0)}
+
+  ::-webkit-scrollbar{width:8px;height:8px}
+  ::-webkit-scrollbar-track{background:rgba(0,0,0,.25)}
+  ::-webkit-scrollbar-thumb{background:rgba(255,45,77,.35);border-radius:4px}
+  ::-webkit-scrollbar-thumb:hover{background:rgba(255,45,77,.65)}
+
+  @keyframes pulse-red{0%,100%{opacity:1}50%{opacity:.35}}
+  .rec-dot{animation:pulse-red 1.6s ease-in-out infinite}
+
+  /* Scan line over player */
+  .scan-effect::before{
+    content:'';position:absolute;top:0;left:0;right:0;height:2px;
+    background:linear-gradient(90deg,transparent,var(--accent),transparent);
+    animation:scan 4s linear infinite;pointer-events:none;z-index:5;
+    opacity:.65;
+  }
+  @keyframes scan{0%{transform:translateY(0)}100%{transform:translateY(60vh)}}
+
+  .video-item{transition:all .18s;border-left:2px solid transparent}
+  .video-item:hover{background:rgba(255,45,77,.07);border-left-color:var(--accent);transform:translateX(2px)}
+  .video-item.active{background:rgba(255,45,77,.12);border-left-color:var(--accent)}
+
+  .touch-btn{
+    min-width:54px;min-height:54px;
+    display:flex;align-items:center;justify-content:center;
+    transition:all .15s;
+  }
+  .touch-btn:active{transform:scale(.94)}
+
+  .toast{
+    animation:slideIn .3s ease, fadeOut .3s ease 2.7s forwards;
+  }
+  @keyframes slideIn{from{transform:translateX(120%);opacity:0}to{transform:translateX(0);opacity:1}}
+  @keyframes fadeOut{to{transform:translateX(120%);opacity:0}}
+
+  .loader-ring{
+    border:3px solid rgba(255,45,77,.2);
+    border-top-color:var(--accent);
+    animation:spin .8s linear infinite;
+  }
+  @keyframes spin{to{transform:rotate(360deg)}}
+
+  .tab-btn{position:relative;transition:all .2s;color:var(--muted)}
+  .tab-btn.active{color:var(--accent)}
+  .tab-btn.active::after{
+    content:'';position:absolute;bottom:-1px;left:0;right:0;height:2px;
+    background:var(--accent);box-shadow:0 0 10px var(--accent);
+  }
+
+  input[type=range]{
+    -webkit-appearance:none;appearance:none;
+    height:5px;background:rgba(255,255,255,.08);border-radius:2px;outline:none;
+  }
+  input[type=range]::-webkit-slider-thumb{
+    -webkit-appearance:none;appearance:none;width:18px;height:18px;
+    background:var(--accent);border-radius:50%;cursor:pointer;
+    box-shadow:0 0 12px var(--accent-glow);
+  }
+
+  .toggle{
+    width:46px;height:24px;background:rgba(255,255,255,.1);
+    border-radius:12px;position:relative;cursor:pointer;transition:all .25s;
+  }
+  .toggle.on{background:var(--accent);box-shadow:0 0 12px var(--accent-glow)}
+  .toggle::after{
+    content:'';position:absolute;top:2px;left:2px;width:20px;height:20px;
+    background:#fff;border-radius:50%;transition:all .25s;
+  }
+  .toggle.on::after{transform:translateX(22px)}
+
+  .speed-btn.active{background:rgba(255,45,77,.18);color:var(--accent)}
+
+  /* Spectrum bars for "now playing" decoration */
+  .eq-bar{
+    width:3px;background:linear-gradient(var(--accent),var(--accent-2));
+    border-radius:2px;
+    animation:eq 1s ease-in-out infinite;
+  }
+  @keyframes eq{0%,100%{height:4px}50%{height:18px}}
+
+  /* Subtle vignette on player */
+  .vignette::after{
+    content:'';position:absolute;inset:0;
+    box-shadow:inset 0 0 120px rgba(0,0,0,.5);
+    pointer-events:none;
+  }
+
+  /* Hide scrollbar in suggested strip */
+  .no-scrollbar::-webkit-scrollbar{height:6px}
+</style>
 </head>
-
 <body>
-    <div class="My_background">
-        <h1>Hoang Do</h1>
-        <!--My picture-->
-        <div class="imgBox">
-            <img src="./images/my_pic.jpg" alt="Hoang Picture">
-        </div>
-    </div>
 
-    <!-- two inline button-->
-    <ul class="btn-group">
-        <!-- My store button-->
-        <li><a href="https://weon-store.com" class="button">My store</a></li>
-        <li>
-            <div class="dropdown">
-            <!-- GUI Assignment button -->
-                <button class="dropbtn button">GUI1</button>
-                <!--dropdown menu-->
-                <div class="dropdown-content">
-                    <a href="Assignments/As2/index.html">Assignment 2</a>
-                    <a href="Assignments/As3/index.html">Assignment 3</a>
-                    <a href="index.html">Assignment 4</a>
-                    <a href="Assignments/inclass6/example.html">inclass 6</a>
-                    <a href="Assignments/As6/index.html">Assignment 6</a>
-                    <a href="Assignments/As7/index.html">Assignment 7</a>
-                    <a href="Assignments/As8/index.html">Assignment 8</a>
-                    <a href="Assignments/As9/index.html">Assignment 9</a>
-                </div>
+<!-- Ambient background -->
+<div class="fixed inset-0 cyber-grid pointer-events-none opacity-40"></div>
+<div class="blob" style="width:520px;height:520px;top:-120px;left:-120px;background:#ff2d4d"></div>
+<div class="blob" style="width:420px;height:420px;bottom:-120px;right:-100px;background:#7c3aed;animation-delay:5s"></div>
+<div class="blob" style="width:300px;height:300px;top:40%;left:40%;background:#ff6b3d;animation-delay:10s;opacity:.08"></div>
+
+<div class="relative h-screen flex flex-col">
+
+  <!-- TOP BAR -->
+  <header class="glass border-b flex-shrink-0 z-20">
+    <div class="flex items-center justify-between gap-4 px-5 py-3">
+      <div class="flex items-center gap-3">
+        <div class="w-11 h-11 rounded-xl bg-gradient-to-br from-red-500 to-orange-500 flex items-center justify-center accent-glow">
+          <i class="fas fa-bolt text-white text-lg"></i>
+        </div>
+        <div>
+          <h1 class="font-display font-black text-lg leading-none">CYBER<span class="text-red-500">STREAM</span></h1>
+          <p class="text-[10px] text-gray-500 mt-0.5 tracking-widest">TESA DASHBOARD PLAYER</p>
+        </div>
+        <div class="hidden lg:flex items-center gap-2 ml-3 px-3 py-1.5 rounded-full glass">
+          <span class="w-2 h-2 rounded-full bg-green-400 rec-dot"></span>
+          <span class="text-[11px] text-gray-400 font-mono">SYSTEM ONLINE</span>
+        </div>
+      </div>
+
+      <!-- URL input -->
+      <div class="flex-1 max-w-2xl">
+        <div class="relative">
+          <i class="fas fa-link absolute left-4 top-1/2 -translate-y-1/2 text-gray-500"></i>
+          <input id="urlInput" type="text" placeholder="Paste YouTube URL or video ID..."
+            class="w-full bg-black/40 border border-white/10 rounded-full pl-11 pr-28 py-3 text-sm focus:outline-none focus:border-red-500 focus:ring-2 focus:ring-red-500/20 transition" />
+          <button id="loadBtn" class="btn-primary absolute right-1 top-1/2 -translate-y-1/2 px-5 py-2 rounded-full text-sm font-semibold">
+            <i class="fas fa-play mr-1.5"></i>LOAD
+          </button>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <div class="hidden md:flex items-center gap-3 mr-2 px-3 py-1.5 rounded-lg glass">
+          <div class="flex items-end gap-0.5 h-5" id="eqViz">
+            <div class="eq-bar" style="animation-delay:0s"></div>
+            <div class="eq-bar" style="animation-delay:.15s"></div>
+            <div class="eq-bar" style="animation-delay:.3s"></div>
+            <div class="eq-bar" style="animation-delay:.45s"></div>
+            <div class="eq-bar" style="animation-delay:.6s"></div>
+          </div>
+          <span class="text-[11px] font-mono text-gray-400" id="signalLabel">STANDBY</span>
+        </div>
+        <button id="settingsBtn" class="touch-btn rounded-lg glass hover:bg-white/5" title="Settings">
+          <i class="fas fa-cog text-gray-400"></i>
+        </button>
+        <button id="fullscreenBtn" class="touch-btn rounded-lg glass hover:bg-white/5" title="Fullscreen">
+          <i class="fas fa-expand text-gray-400"></i>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN -->
+  <main class="flex-1 flex overflow-hidden">
+
+    <!-- SIDEBAR -->
+    <aside id="sidebar" class="w-80 glass border-r flex flex-col flex-shrink-0">
+      <div class="flex border-b border-white/5 flex-shrink-0">
+        <button class="tab-btn active flex-1 py-3.5 text-sm font-medium font-display" data-tab="queue">
+          <i class="fas fa-list-ol mr-1.5"></i>QUEUE
+        </button>
+        <button class="tab-btn flex-1 py-3.5 text-sm font-medium font-display" data-tab="history">
+          <i class="fas fa-clock-rotate-left mr-1.5"></i>HISTORY
+        </button>
+        <button class="tab-btn flex-1 py-3.5 text-sm font-medium font-display" data-tab="saved">
+          <i class="fas fa-bookmark mr-1.5"></i>SAVED
+        </button>
+      </div>
+
+      <div class="flex-1 overflow-y-auto" id="sidebarContent"></div>
+
+      <div class="border-t border-white/5 p-3 flex-shrink-0">
+        <div class="relative">
+          <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm"></i>
+          <input id="searchInput" type="text" placeholder="Search YouTube..."
+            class="w-full bg-black/40 border border-white/10 rounded-lg pl-9 pr-3 py-2.5 text-sm focus:outline-none focus:border-red-500 transition" />
+        </div>
+        <div class="mt-2 flex items-center justify-between text-xs">
+          <span class="text-gray-500">API: <span id="apiStatusText" class="text-yellow-400">Not configured</span></span>
+          <button id="configApiBtn" class="text-red-400 hover:text-red-300 font-medium">Configure</button>
+        </div>
+      </div>
+    </aside>
+
+    <!-- PLAYER AREA -->
+    <section class="flex-1 flex flex-col min-w-0">
+      <div class="flex-1 flex items-center justify-center p-5 relative">
+        <div class="w-full max-w-6xl aspect-video relative bg-black rounded-2xl overflow-hidden shadow-2xl border border-white/5 scan-effect vignette" id="playerWrapper">
+          <div id="player" class="absolute inset-0"></div>
+
+          <!-- Empty state -->
+          <div id="emptyState" class="absolute inset-0 flex flex-col items-center justify-center text-center p-8 z-10">
+            <div class="relative mb-6">
+              <div class="w-28 h-28 rounded-full bg-gradient-to-br from-red-500/20 to-purple-500/10 border border-red-500/30 flex items-center justify-center accent-glow">
+                <i class="fas fa-play text-4xl text-red-500 ml-1"></i>
+              </div>
+              <div class="absolute -inset-2 rounded-full border border-red-500/20 animate-ping" style="animation-duration:3s"></div>
             </div>
-        </li>
-    </ul>
-
-    <!-- div box for about me section -->
-    <div class="box">
-        <div class="content">
-            <h2>about me</h2>
-            <br>
-            <ul>
-            <li>From a bustling city called  <span class="city_color">Ho Chi Minh</span>, <span class="country_color">Vietnam</span>.</li>
-            <li>A senior student at <span class="university_color"> University of Massachusetts, Lowell</span>. Majoring in Computer Science.</li>
-            <li>Like to play sports such as: soccer, badminton, swimming...</li>
-            <li>Currently developing an eCommerce website for my family: <a href="http://weon-stores.unaux.com/">WEON Store</a> to sell perfumes for body, home and baby
-            </ul>
+            <h2 class="font-display text-3xl font-black mb-2">NO SIGNAL</h2>
+            <p class="text-gray-400 max-w-md text-sm">Paste a YouTube URL above, or pick a video from the suggested feed below to start streaming.</p>
+            <div class="mt-6 flex gap-3">
+              <button class="btn-primary px-5 py-2.5 rounded-full text-sm font-semibold" onclick="loadDemoVideo()">
+                <i class="fas fa-bolt mr-1.5"></i>TRY DEMO
+              </button>
+              <button class="glass px-5 py-2.5 rounded-full text-sm font-semibold hover:bg-white/5" onclick="document.getElementById('urlInput').focus()">
+                <i class="fas fa-paste mr-1.5"></i>PASTE URL
+              </button>
+            </div>
+            <p class="text-[11px] text-gray-600 mt-6 font-mono">v1.0 · TESLA BROWSER READY</p>
+          </div>
         </div>
+      </div>
+
+      <!-- CONTROL BAR -->
+      <div class="glass border-t flex-shrink-0">
+        <div class="px-5 py-3">
+          <div class="flex items-center justify-between mb-2.5 gap-4">
+            <div class="flex-1 min-w-0">
+              <h3 id="nowPlayingTitle" class="text-sm font-semibold truncate">— No video loaded —</h3>
+              <p id="nowPlayingChannel" class="text-xs text-gray-500 truncate">Ready to play</p>
+            </div>
+            <div class="flex items-center gap-2 ml-4 font-mono text-xs">
+              <span id="currentTime" class="text-red-400">00:00</span>
+              <span class="text-gray-600">/</span>
+              <span id="duration" class="text-gray-400">00:00</span>
+            </div>
+          </div>
+
+          <div class="relative mb-3">
+            <input type="range" id="progressBar" min="0" max="100" value="0" class="w-full" />
+          </div>
+
+          <div class="flex items-center justify-between gap-3 flex-wrap">
+            <div class="flex items-center gap-2">
+              <button id="prevBtn" class="touch-btn rounded-lg glass hover:bg-white/10" title="Previous">
+                <i class="fas fa-backward"></i>
+              </button>
+              <button id="playPauseBtn" class="touch-btn rounded-lg btn-primary px-6" title="Play / Pause">
+                <i class="fas fa-play" id="playPauseIcon"></i>
+              </button>
+              <button id="nextBtn" class="touch-btn rounded-lg glass hover:bg-white/10" title="Next">
+                <i class="fas fa-forward"></i>
+              </button>
+              <button id="loopBtn" class="touch-btn rounded-lg glass hover:bg-white/10" title="Loop">
+                <i class="fas fa-repeat" id="loopIcon"></i>
+              </button>
+              <button id="muteBtn" class="touch-btn rounded-lg glass hover:bg-white/10" title="Mute">
+                <i class="fas fa-volume-high" id="muteIcon"></i>
+              </button>
+            </div>
+
+            <div class="flex items-center gap-2">
+              <span class="text-[11px] text-gray-500 font-mono">SPEED</span>
+              <div class="flex items-center gap-1">
+                <button class="speed-btn px-3 py-1.5 rounded text-xs font-mono glass hover:bg-white/5" data-speed="0.5">0.5×</button>
+                <button class="speed-btn px-3 py-1.5 rounded text-xs font-mono glass hover:bg-white/5 active" data-speed="1">1×</button>
+                <button class="speed-btn px-3 py-1.5 rounded text-xs font-mono glass hover:bg-white/5" data-speed="1.25">1.25×</button>
+                <button class="speed-btn px-3 py-1.5 rounded text-xs font-mono glass hover:bg-white/5" data-speed="1.5">1.5×</button>
+                <button class="speed-btn px-3 py-1.5 rounded text-xs font-mono glass hover:bg-white/5" data-speed="2">2×</button>
+              </div>
+            </div>
+
+            <div class="flex items-center gap-2">
+              <button id="saveBtn" class="touch-btn rounded-lg glass hover:bg-white/10" title="Save to favorites">
+                <i class="far fa-bookmark" id="saveIcon"></i>
+              </button>
+              <button id="shareBtn" class="touch-btn rounded-lg glass hover:bg-white/10" title="Copy link">
+                <i class="fas fa-link"></i>
+              </button>
+              <button id="theaterBtn" class="touch-btn rounded-lg glass hover:bg-white/10" title="Theater mode">
+                <i class="fas fa-compress"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SUGGESTED -->
+      <div class="glass border-t flex-shrink-0" style="max-height:240px;overflow-y:auto;">
+        <div class="px-5 py-2.5 border-b border-white/5 flex items-center justify-between sticky top-0 glass z-10">
+          <h3 class="font-display text-sm font-bold"><i class="fas fa-fire text-red-500 mr-2"></i>SUGGESTED FEED</h3>
+          <span class="text-[11px] text-gray-500 font-mono">CURATED · 8 ITEMS</span>
+        </div>
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 p-3" id="suggestedGrid"></div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Toasts -->
+  <div id="toastContainer" class="fixed bottom-6 right-6 z-50 flex flex-col gap-2"></div>
+
+  <!-- Settings modal -->
+  <div id="settingsModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/70 backdrop-blur-sm p-4">
+    <div class="glass rounded-2xl max-w-md w-full p-6">
+      <div class="flex items-center justify-between mb-5">
+        <h2 class="font-display text-xl font-bold">SETTINGS</h2>
+        <button id="closeSettings" class="text-gray-400 hover:text-white">
+          <i class="fas fa-times text-xl"></i>
+        </button>
+      </div>
+
+      <div class="space-y-4">
+        <div>
+          <label class="text-sm font-semibold block mb-2">YouTube Data API Key</label>
+          <input id="apiKeyInput" type="password" placeholder="AIza..."
+            class="w-full bg-black/40 border border-white/10 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-red-500" />
+          <p class="text-[11px] text-gray-500 mt-1.5">Enables search. Stored only in this browser. Get a key from Google Cloud Console.</p>
+        </div>
+
+        <div class="flex items-center justify-between py-1">
+          <div>
+            <p class="text-sm font-semibold">Autoplay Next</p>
+            <p class="text-[11px] text-gray-500">Continue queue automatically</p>
+          </div>
+          <div id="autoplayToggle" class="toggle on" data-state="on"></div>
+        </div>
+
+        <div class="flex items-center justify-between py-1">
+          <div>
+            <p class="text-sm font-semibold">Loop Current</p>
+            <p class="text-[11px] text-gray-500">Repeat the same video</p>
+          </div>
+          <div id="loopToggle" class="toggle" data-state="off"></div>
+        </div>
+
+        <div class="flex items-center justify-between py-1">
+          <div>
+            <p class="text-sm font-semibold">Default Quality</p>
+            <p class="text-[11px] text-gray-500">Recommended: 360p–720p</p>
+          </div>
+          <select id="qualitySelect" class="bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-sm">
+            <option value="auto">Auto</option>
+            <option value="small">144p</option>
+            <option value="medium">360p</option>
+            <option value="large">480p</option>
+            <option value="hd720">720p</option>
+            <option value="hd1080">1080p</option>
+          </select>
+        </div>
+
+        <div class="pt-4 border-t border-white/10 space-y-2">
+          <p class="text-[11px] text-gray-500 font-mono">Keyboard: Space play/pause · ←/→ seek · ↑/↓ volume · N next · P previous</p>
+          <button id="clearDataBtn" class="w-full py-2.5 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500/20 text-sm font-semibold">
+            <i class="fas fa-trash mr-2"></i>Clear All Local Data
+          </button>
+        </div>
+      </div>
     </div>
+  </div>
 
-    <!-- Copyright section -->
-    <footer id="copyright">
-        Copyright 2019 by Hoang Do.
-    </footer>
+  <!-- Safety notice -->
+  <div id="safetyNotice" class="fixed bottom-4 left-1/2 -translate-x-1/2 z-40 glass rounded-full px-5 py-2 flex items-center gap-2 text-xs">
+    <i class="fas fa-triangle-exclamation text-yellow-400"></i>
+    <span class="text-gray-300">For passenger use or when parked only. Keep your eyes on the road.</span>
+    <button id="dismissSafety" class="text-gray-500 hover:text-white ml-2">
+      <i class="fas fa-times"></i>
+    </button>
+  </div>
 
+</div>
+
+<script>
+/* ---------- State ---------- */
+const state = {
+  player:null,
+  ready:false,
+  queue:[],
+  history:JSON.parse(localStorage.getItem('cs_history')||'[]'),
+  saved:JSON.parse(localStorage.getItem('cs_saved')||'[]'),
+  currentIndex:-1,
+  apiKey:localStorage.getItem('cs_apikey')||'',
+  autoplay:localStorage.getItem('cs_autoplay')!=='false',
+  loop:localStorage.getItem('cs_loop')==='true',
+  quality:localStorage.getItem('cs_quality')||'auto',
+  currentVideo:null,
+  isMuted:false,
+  activeTab:'queue',
+  theaterMode:false,
+};
+
+/* Curated suggestions (no API key needed) */
+const suggestedVideos = [
+  {id:'aqz-KE-bpKQ', title:'Big Buck Bunny (Open Movie)', channel:'Blender Foundation', duration:'9:53'},
+  {id:'LXb3EKWsInQ', title:'Costa Rica in 4K', channel:'Jacob + Katie Schwarz', duration:'3:42'},
+  {id:'ZiXDOTxNkcc', title:'SpaceX Starship Launch', channel:'SpaceX', duration:'8:14'},
+  {id:'OPf0KEG6iY8', title:'Earth From Space — 4K', channel:'NASA', duration:'12:08'},
+  {id:'eRsGyueVL20', title:'How to Solar Power Your Home', channel:'This Old House', duration:'15:21'},
+  {id:'kJQP7kiw5Fk', title:'Despacito', channel:'Luis Fonsi', duration:'4:42'},
+  {id:'4kbgz7wph3E', title:'Tesla Model S Plaid Review', channel:'Engineering Explained', duration:'18:35'},
+  {id:'JGwWNGJdvx8', title:'Shape of You — Ed Sheeran', channel:'Ed Sheeran', duration:'4:24'},
+];
+
+/* ---------- YouTube API ---------- */
+function onYouTubeIframeAPIReady(){
+  state.player = new YT.Player('player',{
+    width:'100%',height:'100%',
+    playerVars:{
+      autoplay:1,controls:1,modestbranding:1,rel:0,playsinline:1,iv_load_policy:3
+    },
+    events:{
+      onReady:()=>{state.ready=true;},
+      onStateChange:onPlayerStateChange,
+      onError:onPlayerError
+    }
+  });
+}
+
+function onPlayerStateChange(e){
+  const icon=document.getElementById('playPauseIcon');
+  if(e.data===YT.PlayerState.PLAYING){
+    icon.className='fas fa-pause';
+    document.getElementById('signalLabel').textContent='LIVE';
+    startProgress();
+  } else if(e.data===YT.PlayerState.PAUSED){
+    icon.className='fas fa-play';
+    document.getElementById('signalLabel').textContent='PAUSED';
+    stopProgress();
+  } else if(e.data===YT.PlayerState.BUFFERING){
+    document.getElementById('signalLabel').textContent='BUFFERING';
+  } else if(e.data===YT.PlayerState.ENDED){
+    icon.className='fas fa-play';
+    document.getElementById('signalLabel').textContent='ENDED';
+    stopProgress();
+    if(state.loop && state.currentVideo){
+      state.player.seekTo(0);
+      state.player.playVideo();
+    } else if(state.autoplay && state.currentIndex<state.queue.length-1){
+      playIndex(state.currentIndex+1);
+    }
+  }
+}
+function onPlayerError(e){
+  toast('Playback error. Video may be restricted or unavailable.','error');
+  document.getElementById('signalLabel').textContent='ERROR';
+}
+
+/* ---------- Progress ---------- */
+let progressTimer=null;
+function startProgress(){
+  stopProgress();
+  progressTimer=setInterval(updateProgress,250);
+}
+function stopProgress(){
+  if(progressTimer){clearInterval(progressTimer);progressTimer=null;}
+}
+function updateProgress(){
+  if(!state.player||!state.currentVideo||!state.ready)return;
+  try{
+    const cur=state.player.getCurrentTime()||0;
+    const total=state.player.getDuration()||0;
+    if(total>0){
+      document.getElementById('progressBar').value=(cur/total)*100;
+      document.getElementById('currentTime').textContent=fmtTime(cur);
+      document.getElementById('duration').textContent=fmtTime(total);
+    }
+  }catch(e){}
+}
+function fmtTime(s){
+  if(!s||isNaN(s))return '00:00';
+  const m=Math.floor(s/60), sec=Math.floor(s%60), h=Math.floor(m/60);
+  if(h>0) return `${h}:${String(m%60).padStart(2,'0')}:${String(sec).padStart(2,'0')}`;
+  return `${m}:${String(sec).padStart(2,'0')}`;
+}
+
+/* ---------- Video parsing ---------- */
+function extractVideoId(input){
+  if(!input)return null;
+  input=input.trim();
+  if(/^[a-zA-Z0-9_-]{11}$/.test(input))return input;
+  const patterns=[
+    /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/|youtube\.com\/shorts\/|youtube\.com\/v\/|youtube\.com\/live\/)([a-zA-Z0-9_-]{11})/,
+    /[?&]v=([a-zA-Z0-9_-]{11})/
+  ];
+  for(const p of patterns){
+    const m=input.match(p);
+    if(m)return m[1];
+  }
+  return null;
+}
+
+function loadVideo(id,title='Loading...',channel=''){
+  if(!state.ready||!state.player){
+    return setTimeout(()=>loadVideo(id,title,channel),300);
+  }
+  document.getElementById('emptyState').style.display='none';
+  state.player.loadVideoById(id);
+  if(state.quality!=='auto'){
+    setTimeout(()=>{try{state.player.setPlaybackQuality(state.quality);}catch(e){}},600);
+  }
+  state.currentVideo={id,title,channel};
+  document.getElementById('nowPlayingTitle').textContent=title;
+  document.getElementById('nowPlayingChannel').textContent=channel||'YouTube';
+  addToHistory({id,title,channel});
+  renderSidebar();
+  toast('Now playing: '+title,'success');
+}
+
+function addToHistory(v){
+  state.history=state.history.filter(x=>x.id!==v.id);
+  state.history.unshift(v);
+  state.history=state.history.slice(0,50);
+  localStorage.setItem('cs_history',JSON.stringify(state.history));
+}
+function addToQueue(v){
+  if(state.queue.find(x=>x.id===v.id)){toast('Already in queue','info');return false;}
+  state.queue.push(v);
+  renderSidebar();
+  toast('Added to queue','success');
+  return true;
+}
+function playIndex(i){
+  if(i<0||i>=state.queue.length)return;
+  state.currentIndex=i;
+  const v=state.queue[i];
+  loadVideo(v.id,v.title,v.channel);
+}
+function removeFromQueue(i){
+  state.queue.splice(i,1);
+  if(state.currentIndex>=i)state.currentIndex--;
+  renderSidebar();
+}
+function removeFromSaved(id){
+  state.saved=state.saved.filter(v=>v.id!==id);
+  localStorage.setItem('cs_saved',JSON.stringify(state.saved));
+  renderSidebar();
+  toast('Removed','info');
+}
+function addToQueueAndPlay(v){
+  if(addToQueue(v)){
+    const idx=state.queue.findIndex(x=>x.id===v.id);
+    if(idx>=0)playIndex(idx);
+  } else {
+    // Already in queue — just play it
+    const idx=state.queue.findIndex(x=>x.id===v.id);
+    if(idx>=0)playIndex(idx);
+  }
+}
+function loadDemoVideo(){
+  addToQueueAndPlay(suggestedVideos[0]);
+}
+
+/* ---------- Sidebar ---------- */
+function renderSidebar(){
+  const c=document.getElementById('sidebarContent');
+  let html='';
+  if(state.activeTab==='queue'){
+    if(!state.queue.length){
+      html=`<div class="flex flex-col items-center justify-center h-full text-center p-6">
+        <i class="fas fa-list-ul text-4xl text-gray-700 mb-3"></i>
+        <p class="text-sm text-gray-500">Queue is empty</p>
+        <p class="text-xs text-gray-600 mt-1">Pick from the suggested feed below</p>
+      </div>`;
+    } else {
+      html=state.queue.map((v,i)=>`
+        <div class="video-item ${state.currentIndex===i?'active':''} flex items-center gap-3 p-3 cursor-pointer" onclick="playIndex(${i})">
+          <div class="text-xs font-mono text-gray-500 w-6">${String(i+1).padStart(2,'0')}</div>
+          <div class="w-14 h-9 rounded overflow-hidden bg-black/40 flex-shrink-0">
+            <img src="https://i.ytimg.com/vi/${v.id}/default.jpg" class="w-full h-full object-cover" onerror="this.style.display='none'">
+          </div>
+          <div class="flex-1 min-w-0">
+            <p class="text-sm font-medium truncate">${esc(v.title)}</p>
+            <p class="text-[11px] text-gray-500 truncate">${esc(v.channel||'YouTube')}</p>
+          </div>
+          <button onclick="event.stopPropagation();removeFromQueue(${i})" class="text-gray-500 hover:text-red-400 p-1">
+            <i class="fas fa-times text-xs"></i>
+          </button>
+        </div>`).join('');
+    }
+  } else if(state.activeTab==='history'){
+    if(!state.history.length){
+      html=`<div class="flex flex-col items-center justify-center h-full text-center p-6">
+        <i class="fas fa-clock-rotate-left text-4xl text-gray-700 mb-3"></i>
+        <p class="text-sm text-gray-500">No history yet</p>
+      </div>`;
+    } else {
+      html=state.history.map(v=>`
+        <div class="video-item flex items-center gap-3 p-3 cursor-pointer" onclick="loadVideo('${v.id}',${JSON.stringify(v.title)},${JSON.stringify(v.channel||'')})">
+          <div class="w-14 h-9 rounded overflow-hidden bg-black/40 flex-shrink-0">
+            <img src="https://i.ytimg.com/vi/${v.id}/default.jpg" class="w-full h-full object-cover" onerror="this.style.display='none'">
+          </div>
+          <div class="flex-1 min-w-0">
+            <p class="text-sm font-medium truncate">${esc(v.title)}</p>
+            <p class="text-[11px] text-gray-500 truncate">${esc(v.channel||'YouTube')}</p>
+          </div>
+        </div>`).join('');
+    }
+  } else if(state.activeTab==='saved'){
+    if(!state.saved.length){
+      html=`<div class="flex flex-col items-center justify-center h-full text-center p-6">
+        <i class="fas fa-bookmark text-4xl text-gray-700 mb-3"></i>
+        <p class="text-sm text-gray-500">No saved videos</p>
+        <p class="text-xs text-gray-600 mt-1">Press the bookmark icon while playing</p>
+      </div>`;
+    } else {
+      html=state.saved.map(v=>`
+        <div class="video-item flex items-center gap-3 p-3 cursor-pointer" onclick="loadVideo('${v.id}',${JSON.stringify(v.title)},${JSON.stringify(v.channel||'')})">
+          <div class="w-14 h-9 rounded overflow-hidden bg-black/40 flex-shrink-0">
+            <img src="https://i.ytimg.com/vi/${v.id}/default.jpg" class="w-full h-full object-cover" onerror="this.style.display='none'">
+          </div>
+          <div class="flex-1 min-w-0">
+            <p class="text-sm font-medium truncate">${esc(v.title)}</p>
+            <p class="text-[11px] text-gray-500 truncate">${esc(v.channel||'YouTube')}</p>
+          </div>
+          <button onclick="event.stopPropagation();removeFromSaved('${v.id}')" class="text-gray-500 hover:text-red-400 p-1">
+            <i class="fas fa-times text-xs"></i>
+          </button>
+        </div>`).join('');
+    }
+  }
+  c.innerHTML=html;
+}
+function esc(s){return String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+
+/* ---------- Suggested ---------- */
+function renderSuggested(){
+  const g=document.getElementById('suggestedGrid');
+  g.innerHTML=suggestedVideos.map(v=>`
+    <div class="video-item rounded-lg overflow-hidden cursor-pointer glass" onclick='addToQueueAndPlay(${JSON.stringify(v)})'>
+      <div class="relative aspect-video bg-black/40">
+        <img src="https://i.ytimg.com/vi/${v.id}/hqdefault.jpg" class="w-full h-full object-cover" onerror="this.parentElement.style.background='#1a1a25'">
+        <div class="absolute bottom-1 right-1 bg-black/80 px-1.5 py-0.5 rounded text-[10px] font-mono">${v.duration}</div>
+        <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 hover:opacity-100 transition flex items-center justify-center">
+          <i class="fas fa-play-circle text-3xl text-red-500"></i>
+        </div>
+      </div>
+      <div class="p-2">
+        <p class="text-xs font-medium truncate">${esc(v.title)}</p>
+        <p class="text-[11px] text-gray-500 truncate">${esc(v.channel)}</p>
+      </div>
+    </div>`).join('');
+}
+
+/* ---------- Toasts ---------- */
+function toast(msg,type='info'){
+  const c=document.getElementById('toastContainer');
+  const colors={success:'border-green-500 text-green-400',error:'border-red-500 text-red-400',info:'border-blue-500 text-blue-400'};
+  const icons={success:'fa-circle-check',error:'fa-circle-exclamation',info:'fa-circle-info'};
+  const t=document.createElement('div');
+  t.className=`toast glass border ${colors[type]} px-4 py-3 rounded-lg flex items-center gap-2 text-sm max-w-xs`;
+  t.innerHTML=`<i class="fas ${icons[type]}"></i><span>${esc(msg)}</span>`;
+  c.appendChild(t);
+  setTimeout(()=>t.remove(),3000);
+}
+
+/* ---------- Search ---------- */
+async function searchYouTube(q){
+  if(!state.apiKey){
+    toast('Configure your YouTube API key in settings','info');
+    return;
+  }
+  const sc=document.getElementById('sidebarContent');
+  sc.innerHTML=`<div class="flex items-center justify-center h-full"><div class="loader-ring w-8 h-8 rounded-full"></div></div>`;
+  try{
+    const r=await fetch(`https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&maxResults=25&q=${encodeURIComponent(q)}&key=${state.apiKey}`);
+    const d=await r.json();
+    if(d.error){toast('API Error: '+(d.error.message||'unknown'),'error');renderSidebar();return;}
+    if(!d.items||!d.items.length){toast('No results','info');renderSidebar();return;}
+    sc.innerHTML=d.items.map(it=>`
+      <div class="video-item flex items-center gap-3 p-3 cursor-pointer" onclick="loadVideo('${it.id.videoId}',${JSON.stringify(it.snippet.title)},${JSON.stringify(it.snippet.channelTitle)})">
+        <div class="w-14 h-9 rounded overflow-hidden bg-black/40 flex-shrink-0">
+          <img src="${it.snippet.thumbnails.default.url}" class="w-full h-full object-cover">
+        </div>
+        <div class="flex-1 min-w-0">
+          <p class="text-sm font-medium truncate">${esc(it.snippet.title)}</p>
+          <p class="text-[11px] text-gray-500 truncate">${esc(it.snippet.channelTitle)}</p>
+        </div>
+      </div>`).join('');
+  }catch(e){
+    toast('Search failed. Check connection.','error');
+    renderSidebar();
+  }
+}
+
+/* ---------- Events ---------- */
+document.getElementById('loadBtn').addEventListener('click',()=>{
+  const inp=document.getElementById('urlInput');
+  const id=extractVideoId(inp.value);
+  if(id){
+    addToQueueAndPlay({id,title:'YouTube Video',channel:''});
+    inp.value='';
+  } else {
+    toast('Invalid YouTube URL or ID','error');
+  }
+});
+document.getElementById('urlInput').addEventListener('keydown',e=>{
+  if(e.key==='Enter')document.getElementById('loadBtn').click();
+});
+document.getElementById('searchInput').addEventListener('keydown',e=>{
+  if(e.key==='Enter'&&e.target.value.trim())searchYouTube(e.target.value.trim());
+});
+
+document.querySelectorAll('.tab-btn').forEach(b=>{
+  b.addEventListener('click',()=>{
+    document.querySelectorAll('.tab-btn').forEach(x=>x.classList.remove('active'));
+    b.classList.add('active');
+    state.activeTab=b.dataset.tab;
+    renderSidebar();
+  });
+});
+
+document.getElementById('playPauseBtn').addEventListener('click',()=>{
+  if(!state.player||!state.currentVideo){toast('Load a video first','info');return;}
+  const s=state.player.getPlayerState();
+  if(s===YT.PlayerState.PLAYING)state.player.pauseVideo();
+  else state.player.playVideo();
+});
+document.getElementById('nextBtn').addEventListener('click',()=>{
+  if(state.currentIndex<state.queue.length-1)playIndex(state.currentIndex+1);
+  else toast('End of queue','info');
+});
+document.getElementById('prevBtn').addEventListener('click',()=>{
+  if(state.currentIndex>0)playIndex(state.currentIndex-1);
+  else toast('Already at first','info');
+});
+document.getElementById('loopBtn').addEventListener('click',()=>{
+  state.loop=!state.loop;
+  localStorage.setItem('cs_loop',state.loop);
+  const lb=document.getElementById('loopBtn');
+  const lt=document.getElementById('loopToggle');
+  if(state.loop){
+    lb.classList.add('bg-red-500/20','text-red-400');
+    lt.classList.add('on');
+    toast('Loop enabled','success');
+  } else {
+    lb.classList.remove('bg-red-500/20','text-red-400');
+    lt.classList.remove('on');
+    toast('Loop disabled','info');
+  }
+});
+document.getElementById('muteBtn').addEventListener('click',()=>{
+  if(!state.player)return;
+  state.isMuted=!state.isMuted;
+  if(state.isMuted){state.player.mute();document.getElementById('muteIcon').className='fas fa-volume-xmark';}
+  else{state.player.unMute();document.getElementById('muteIcon').className='fas fa-volume-high';}
+});
+document.getElementById('progressBar').addEventListener('input',e=>{
+  if(!state.player||!state.currentVideo)return;
+  const total=state.player.getDuration();
+  if(total>0)state.player.seekTo((e.target.value/100)*total,true);
+});
+
+document.querySelectorAll('.speed-btn').forEach(b=>{
+  b.addEventListener('click',()=>{
+    const sp=parseFloat(b.dataset.speed);
+    if(state.player&&state.currentVideo)state.player.setPlaybackRate(sp);
+    document.querySelectorAll('.speed-btn').forEach(x=>x.classList.remove('active'));
+    b.classList.add('active');
+    toast('Speed: '+sp+'×','info');
+  });
+});
+
+document.getElementById('saveBtn').addEventListener('click',()=>{
+  if(!state.currentVideo){toast('No video to save','info');return;}
+  if(state.saved.find(v=>v.id===state.currentVideo.id)){toast('Already saved','info');return;}
+  state.saved.push(state.currentVideo);
+  localStorage.setItem('cs_saved',JSON.stringify(state.saved));
+  document.getElementById('saveIcon').className='fas fa-bookmark text-red-400';
+  toast('Saved to favorites','success');
+  if(state.activeTab==='saved')renderSidebar();
+});
+
+document.getElementById('shareBtn').addEventListener('click',()=>{
+  if(!state.currentVideo)return;
+  const url='https://youtu.be/'+state.currentVideo.id;
+  navigator.clipboard?.writeText(url).then(()=>toast('Link copied','success'))
+    .catch(()=>toast('Link: '+url,'info'));
+});
+
+document.getElementById('fullscreenBtn').addEventListener('click',()=>{
+  const el=document.getElementById('playerWrapper');
+  if(!document.fullscreenElement)el.requestFullscreen?.();
+  else document.exitFullscreen?.();
+});
+
+document.getElementById('theaterBtn').addEventListener('click',()=>{
+  state.theaterMode=!state.theaterMode;
+  const sb=document.getElementById('sidebar');
+  sb.style.display=state.theaterMode?'none':'flex';
+  document.querySelector('#theaterBtn i').className=state.theaterMode?'fas fa-expand':'fas fa-compress';
+});
+
+/* Settings */
+document.getElementById('settingsBtn').addEventListener('click',()=>{
+  const m=document.getElementById('settingsModal');
+  m.classList.remove('hidden');m.classList.add('flex');
+  document.getElementById('apiKeyInput').value=state.apiKey;
+});
+document.getElementById('closeSettings').addEventListener('click',()=>{
+  const m=document.getElementById('settingsModal');
+  m.classList.add('hidden');m.classList.remove('flex');
+});
+document.getElementById('configApiBtn').addEventListener('click',()=>document.getElementById('settingsBtn').click());
+document.getElementById('apiKeyInput').addEventListener('input',e=>{
+  state.apiKey=e.target.value.trim();
+  localStorage.setItem('cs_apikey',state.apiKey);
+  updateApiStatus();
+});
+function updateApiStatus(){
+  const t=document.getElementById('apiStatusText');
+  if(state.apiKey){t.textContent='Active';t.className='text-green-400';}
+  else{t.textContent='Not configured';t.className='text-yellow-400';}
+}
+document.getElementById('autoplayToggle').addEventListener('click',()=>{
+  state.autoplay=!state.autoplay;
+  localStorage.setItem('cs_autoplay',state.autoplay);
+  document.getElementById('autoplayToggle').classList.toggle('on',state.autoplay);
+  toast('Autoplay '+(state.autoplay?'on':'off'),'info');
+});
+document.getElementById('loopToggle').addEventListener('click',()=>document.getElementById('loopBtn').click());
+document.getElementById('qualitySelect').addEventListener('change',e=>{
+  state.quality=e.target.value;
+  localStorage.setItem('cs_quality',state.quality);
+  if(state.player&&state.currentVideo)state.player.setPlaybackQuality(state.quality);
+});
+document.getElementById('clearDataBtn').addEventListener('click',()=>{
+  if(!confirm('Clear all saved data, history, and settings?'))return;
+  localStorage.clear();location.reload();
+});
+document.getElementById('dismissSafety').addEventListener('click',()=>document.getElementById('safetyNotice').style.display='none');
+
+/* Keyboard shortcuts */
+document.addEventListener('keydown',e=>{
+  if(e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA')return;
+  if(!state.player||!state.currentVideo)return;
+  switch(e.key){
+    case ' ':e.preventDefault();
+      const s=state.player.getPlayerState();
+      if(s===YT.PlayerState.PLAYING)state.player.pauseVideo();else state.player.playVideo();
+      break;
+    case 'ArrowRight':state.player.seekTo(state.player.getCurrentTime()+10,true);break;
+    case 'ArrowLeft':state.player.seekTo(Math.max(0,state.player.getCurrentTime()-10),true);break;
+    case 'ArrowUp':state.player.setVolume(Math.min(100,state.player.getVolume()+10));break;
+    case 'ArrowDown':state.player.setVolume(Math.max(0,state.player.getVolume()-10));break;
+    case 'n':case 'N':document.getElementById('nextBtn').click();break;
+    case 'p':case 'P':document.getElementById('prevBtn').click();break;
+    case 'm':case 'M':document.getElementById('muteBtn').click();break;
+  }
+});
+
+/* Init */
+document.getElementById('qualitySelect').value=state.quality;
+if(state.loop){
+  document.getElementById('loopBtn').classList.add('bg-red-500/20','text-red-400');
+  document.getElementById('loopToggle').classList.add('on');
+}
+if(!state.autoplay)document.getElementById('autoplayToggle').classList.remove('on');
+updateApiStatus();
+renderSidebar();
+renderSuggested();
+
+/* Auto-hide safety after 12s */
+setTimeout(()=>{const n=document.getElementById('safetyNotice');if(n)n.style.transition='opacity .6s';n.style.opacity='0';setTimeout(()=>n.style.display='none',700);},12000);
+
+/* Expose inline handlers */
+window.loadVideo=loadVideo;
+window.playIndex=playIndex;
+window.removeFromQueue=removeFromQueue;
+window.addToQueueAndPlay=addToQueueAndPlay;
+window.loadDemoVideo=loadDemoVideo;
+window.removeFromSaved=removeFromSaved;
+</script>
 </body>
-
 </html>
