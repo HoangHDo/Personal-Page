@@ -1,930 +1,1114 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-<title>CyberStream — Tesla YouTube Player</title>
-<script src="https://cdn.tailwindcss.com"></script>
-<script src="https://www.youtube.com/iframe_api"></script>
-<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=JetBrains+Mono:wght@400;600&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#0a0a0c">
+<title>AUTOBAHN — YouTube Cockpit</title>
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
-  :root{
-    --bg:#070710;
-    --bg-elev:#0f0f1a;
-    --bg-card:#15151f;
-    --fg:#f2f2f7;
-    --muted:#6b6b80;
-    --accent:#ff2d4d;
-    --accent-2:#ff6b3d;
-    --accent-glow:rgba(255,45,77,.45);
-    --border:rgba(255,255,255,.07);
-    --grid:rgba(255,255,255,.025);
-    --ok:#22e08a;
-    --warn:#ffcb3d;
-  }
-  *{box-sizing:border-box}
-  html,body{height:100%}
-  body{
-    background:var(--bg);
-    color:var(--fg);
-    font-family:'Inter',sans-serif;
-    overflow:hidden;
-    -webkit-tap-highlight-color:transparent;
-  }
-  .font-display{font-family:'Orbitron',sans-serif;letter-spacing:.06em}
-  .font-mono{font-family:'JetBrains Mono',monospace}
+/* ============ tokens ============ */
+:root{
+  --bg:#0a0a0c; --panel:#111114; --panel2:#16161b;
+  --line:#232329; --line2:#33333c;
+  --ink:#ececf1; --ink2:#9a9aa3; --ink3:#6b6b76;
+  --amber:#ffb000; --amber-dim:rgba(255,176,0,.13); --red:#ff5d5d;
+  --disp:'Rajdhani','Segoe UI',sans-serif; --mono:'IBM Plex Mono',ui-monospace,monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{background:var(--bg);color:var(--ink);font-family:var(--disp);overflow:hidden;display:flex;flex-direction:column;user-select:none}
+input{user-select:text}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;touch-action:manipulation}
+:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
+[hidden]{display:none!important}
+.mono{font-family:var(--mono)}
+.ic{width:20px;height:20px;display:block}
+::-webkit-scrollbar{width:8px}
+::-webkit-scrollbar-thumb{background:#2b2b33}
+::-webkit-scrollbar-track{background:transparent}
 
-  /* Ambient background */
-  .cyber-grid{
-    background-image:
-      linear-gradient(var(--grid) 1px, transparent 1px),
-      linear-gradient(90deg, var(--grid) 1px, transparent 1px);
-    background-size:48px 48px;
-  }
-  .blob{
-    position:absolute;border-radius:50%;
-    filter:blur(90px);opacity:.18;pointer-events:none;
-    animation:float 22s ease-in-out infinite;
-  }
-  @keyframes float{
-    0%,100%{transform:translate(0,0) scale(1)}
-    50%{transform:translate(40px,-30px) scale(1.1)}
-  }
+/* ============ header ============ */
+header{height:60px;flex:0 0 60px;display:flex;align-items:center;gap:18px;padding:0 18px;border-bottom:1px solid var(--line);background:var(--panel)}
+.brand{display:flex;align-items:center;gap:11px}
+.brand .mark{width:27px;height:27px;color:var(--amber);flex:0 0 27px}
+.brand-name{font-weight:700;font-size:21px;letter-spacing:.17em;line-height:1}
+.brand-sub{font-size:8.5px;letter-spacing:.34em;color:var(--ink3);margin-top:3px}
+.command{flex:1;max-width:740px;display:flex;align-items:center;gap:10px;height:40px;border:1px solid var(--line2);background:#0d0d10;padding:0 6px 0 13px;transition:border-color .2s}
+.command:focus-within{border-color:var(--amber)}
+.command.flash{animation:flash .9s}
+@keyframes flash{0%,55%{border-color:var(--amber);box-shadow:inset 0 0 0 1px var(--amber)}100%{border-color:var(--line2)}}
+.command .lead{color:var(--ink3);width:16px;height:16px;flex:0 0 16px}
+.command input{flex:1;min-width:0;background:none;border:0;outline:0;color:var(--ink);font-family:var(--mono);font-size:12.5px;letter-spacing:.02em}
+.command input::placeholder{color:var(--ink3)}
+.command .go{font-family:var(--mono);font-size:11px;letter-spacing:.2em;color:var(--amber);border:1px solid rgba(255,176,0,.4);padding:6px 13px;height:28px;transition:.15s}
+.command .go:hover{background:var(--amber);color:#000;border-color:var(--amber)}
+.hactions{display:flex;align-items:center;gap:10px;margin-left:auto}
+.hbtn{width:38px;height:38px;border:1px solid var(--line2);display:grid;place-items:center;color:var(--ink2);transition:.15s}
+.hbtn .ic{width:17px;height:17px}
+.hbtn:hover{color:var(--amber);border-color:var(--amber)}
+.hbtn.on{color:var(--amber);border-color:var(--amber);background:var(--amber-dim)}
+.hbtn.dead{opacity:.35;cursor:not-allowed}
+/* drive switch */
+.driveswitch{display:flex;align-items:center;gap:10px;border:1px solid var(--line2);height:38px;padding:0 13px;transition:.2s}
+.ds-track{width:40px;height:20px;border:1px solid var(--line2);position:relative;transition:.2s;flex:0 0 40px}
+.ds-knob{position:absolute;top:2px;left:2px;width:14px;height:14px;background:var(--ink2);transition:.2s}
+.dsi{width:15px;height:15px;color:var(--ink2)}
+.ds-label{font-size:11px;letter-spacing:.22em;color:var(--ink2)}
+.driveswitch:hover{border-color:var(--amber)}
+body.drive .driveswitch{border-color:var(--amber);background:var(--amber-dim)}
+body.drive .ds-track{background:var(--amber);border-color:var(--amber)}
+body.drive .ds-knob{left:22px;background:#000}
+body.drive .dsi,body.drive .ds-label{color:var(--amber)}
+/* dim popover */
+.dimwrap{position:relative}
+.dim-pop{position:absolute;top:calc(100% + 10px);right:0;width:224px;background:#101014;border:1px solid var(--line2);padding:13px 15px;display:none;gap:10px;align-items:center;z-index:50}
+.dimwrap.open .dim-pop{display:flex}
+.dim-pop .rol{flex:0 0 auto}
+.dim-pop input{flex:1;min-width:0}
 
-  .glass{
-    background:rgba(15,15,26,.78);
-    backdrop-filter:blur(18px);
-    -webkit-backdrop-filter:blur(18px);
-    border:1px solid var(--border);
-  }
-  .accent-glow{box-shadow:0 0 24px var(--accent-glow),0 0 60px rgba(255,45,77,.18)}
-  .btn-primary{
-    background:linear-gradient(135deg,var(--accent),var(--accent-2));
-    color:#fff;
-    transition:transform .15s, box-shadow .2s;
-  }
-  .btn-primary:hover{transform:translateY(-1px);box-shadow:0 0 22px var(--accent-glow)}
-  .btn-primary:active{transform:translateY(0)}
+/* ============ layout ============ */
+main{flex:1;display:flex;min-height:0;position:relative}
+.stage{flex:1;min-width:0;display:flex;flex-direction:column;padding:16px 20px 12px;gap:9px}
+.screen-head{display:flex;justify-content:space-between;font-size:10px;letter-spacing:.24em;color:var(--ink3)}
+#modeTag{color:var(--ink2)}
+body.drive #modeTag{color:var(--amber)}
 
-  ::-webkit-scrollbar{width:8px;height:8px}
-  ::-webkit-scrollbar-track{background:rgba(0,0,0,.25)}
-  ::-webkit-scrollbar-thumb{background:rgba(255,45,77,.35);border-radius:4px}
-  ::-webkit-scrollbar-thumb:hover{background:rgba(255,45,77,.65)}
+/* screen + viewfinder corners */
+.screen{position:relative;flex:1;min-height:170px;background:#000;border:1px solid var(--line)}
+.screen::before,.screen::after,.corner::before,.corner::after{content:'';position:absolute;width:20px;height:20px;border:0 solid var(--amber);z-index:6;pointer-events:none}
+.screen::before{top:-2px;left:-2px;border-top-width:2px;border-left-width:2px}
+.screen::after{bottom:-2px;right:-2px;border-bottom-width:2px;border-right-width:2px}
+.corner{position:absolute;inset:0;pointer-events:none;z-index:6}
+.corner::before{top:-2px;right:-2px;border-top-width:2px;border-right-width:2px}
+.corner::after{bottom:-2px;left:-2px;border-bottom-width:2px;border-left-width:2px}
+.video-wrap{position:absolute;inset:0;z-index:1}
+.video-wrap iframe{position:absolute;inset:0;width:100%;height:100%;border:0;pointer-events:none}
+.spool{position:absolute;left:14px;bottom:12px;font-size:10px;letter-spacing:.24em;color:var(--amber);z-index:2;animation:blink 1s steps(2) infinite}
 
-  @keyframes pulse-red{0%,100%{opacity:1}50%{opacity:.35}}
-  .rec-dot{animation:pulse-red 1.6s ease-in-out infinite}
+/* ============ drive plate ============ */
+.plate{position:absolute;inset:0;z-index:3;display:flex;align-items:center;justify-content:center;background:#0a0a0c;overflow:hidden;clip-path:inset(0 0 0 100%);transition:clip-path .55s cubic-bezier(.65,0,.25,1)}
+body.drive .plate{clip-path:inset(0)}
+body.drive.pax .plate{clip-path:inset(0 0 0 100%)}
+.plate-art{position:absolute;inset:-24px;background-size:cover;background-position:center;filter:grayscale(.7) brightness(.28) contrast(1.1);transform:scale(1.03)}
+.plate-veil{position:absolute;inset:0;background:rgba(8,8,10,.55)}
+.plate-body{position:relative;text-align:center;max-width:84%;padding:0 20px}
+.plate-eyebrow{font-size:10px;letter-spacing:.36em;color:var(--amber);margin-bottom:18px}
+.plate-title{font-size:clamp(26px,3.6vw,54px);font-weight:700;line-height:1.04;color:#fff}
+.plate-author{font-size:12px;letter-spacing:.28em;color:var(--ink2);margin-top:16px}
+.eq{display:flex;gap:5px;justify-content:center;margin-top:26px;height:22px;align-items:flex-end}
+.eq i{width:4px;background:var(--amber);height:22px;transform:scaleY(.12);transform-origin:bottom}
+.plate.live .eq i{animation:eq .8s ease-in-out infinite alternate}
+.eq i:nth-child(2){animation-delay:.12s;animation-duration:.9s}
+.eq i:nth-child(3){animation-delay:.05s;animation-duration:.6s}
+.eq i:nth-child(4){animation-delay:.3s;animation-duration:.8s}
+.eq i:nth-child(5){animation-delay:.18s;animation-duration:.65s}
+.eq i:nth-child(6){animation-delay:.4s;animation-duration:.85s}
+.eq i:nth-child(7){animation-delay:.25s;animation-duration:.75s}
+@keyframes eq{from{transform:scaleY(.12)}to{transform:scaleY(1)}}
+.plate-clock{position:absolute;right:26px;bottom:18px;font-family:var(--disp);font-weight:700;font-size:42px;color:var(--amber);letter-spacing:.06em}
+.plate-badge{position:absolute;left:26px;top:20px;font-size:9px;letter-spacing:.32em;color:var(--ink3);border:1px solid var(--line2);padding:5px 9px}
+.passbtn{position:absolute;left:26px;bottom:22px;display:flex;align-items:center;gap:9px;font-size:9.5px;letter-spacing:.22em;color:var(--ink2);border:1px solid var(--line2);padding:9px 13px;background:rgba(10,10,12,.55);transition:.15s}
+.passbtn:hover{color:var(--amber);border-color:var(--amber)}
+.passbtn .ic{width:13px;height:13px}
+.paxchip{position:absolute;right:14px;top:12px;z-index:7;display:none;align-items:center;gap:8px;font-size:9.5px;letter-spacing:.2em;color:var(--amber);border:1px solid rgba(255,176,0,.5);background:rgba(0,0,0,.6);padding:8px 12px}
+body.drive.pax .paxchip{display:flex}
+/* engage sweep */
+.sweep{position:absolute;top:0;bottom:0;left:0;width:2px;background:var(--amber);opacity:0;z-index:8;pointer-events:none}
+.screen.sweeping .sweep{animation:sweep .55s cubic-bezier(.6,0,.3,1)}
+@keyframes sweep{0%{opacity:.9;left:0}100%{opacity:0;left:100%}}
 
-  /* Scan line over player */
-  .scan-effect::before{
-    content:'';position:absolute;top:0;left:0;right:0;height:2px;
-    background:linear-gradient(90deg,transparent,var(--accent),transparent);
-    animation:scan 4s linear infinite;pointer-events:none;z-index:5;
-    opacity:.65;
-  }
-  @keyframes scan{0%{transform:translateY(0)}100%{transform:translateY(60vh)}}
+/* ============ ignition (standby) ============ */
+.ignition{position:absolute;inset:0;z-index:4;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:13px;background:#0a0a0c;opacity:0;visibility:hidden;transition:opacity .35s,visibility .35s}
+.ignition.show{opacity:1;visibility:visible}
+.ig-ring{position:relative;width:148px;height:148px;color:var(--ink2);transition:.25s}
+.ig-ring .dash{position:absolute;inset:0;width:100%;height:100%;animation:spin 26s linear infinite}
+.ig-ring .big{position:absolute;inset:0;margin:auto;width:34px;height:34px;color:var(--ink)}
+.ig-ring:hover{color:var(--amber);transform:scale(1.04)}
+.ig-ring:hover .big{color:var(--amber)}
+@keyframes spin{to{transform:rotate(360deg)}}
+.ig-title{font-size:30px;font-weight:700;letter-spacing:.34em;padding-left:.34em;margin-top:6px}
+.ig-sub{font-size:10.5px;letter-spacing:.26em;color:var(--ink3)}
+.ig-chips{display:flex;gap:10px;margin-top:14px;flex-wrap:wrap;justify-content:center}
+.chip{display:flex;align-items:center;gap:9px;border:1px solid var(--line2);padding:9px 14px;font-family:var(--mono);font-size:10.5px;letter-spacing:.16em;color:var(--ink2);transition:.15s}
+.chip:hover{color:var(--amber);border-color:var(--amber)}
+.chip .ic{width:11px;height:11px}
 
-  .video-item{transition:all .18s;border-left:2px solid transparent}
-  .video-item:hover{background:rgba(255,45,77,.07);border-left-color:var(--accent);transform:translateX(2px)}
-  .video-item.active{background:rgba(255,45,77,.12);border-left-color:var(--accent)}
+/* ============ transport ============ */
+.road{position:relative;height:36px;background:#121216;border:1px solid var(--line);cursor:pointer;touch-action:none;overflow:visible}
+.road::before{content:'';position:absolute;left:0;right:0;top:50%;height:3px;margin-top:-1.5px;background:repeating-linear-gradient(90deg,#3a3a44 0 22px,transparent 22px 46px)}
+.road-fill{position:absolute;left:0;top:0;bottom:0;width:0;background:rgba(255,176,0,.13);border-right:2px solid var(--amber);pointer-events:none}
+.road-car{position:absolute;top:50%;left:0;width:26px;height:26px;margin:-13px 0 0 -13px;background:var(--amber);color:#000;display:grid;place-items:center;pointer-events:none;z-index:2}
+.road-car .ic{width:16px;height:16px}
+.road-tip{position:absolute;bottom:calc(100% + 9px);transform:translateX(-50%);background:#000;border:1px solid var(--amber);color:var(--amber);font-size:11px;padding:3px 7px;pointer-events:none;opacity:0;white-space:nowrap;transition:opacity .12s}
+.road-tip.show{opacity:1}
+.t-controls{display:flex;align-items:center;justify-content:center;gap:22px;margin:14px 0 8px}
+.tbtn{width:52px;height:52px;border:1px solid var(--line2);display:grid;place-items:center;color:var(--ink2);background:#111114;transition:.15s;position:relative}
+.tbtn:hover{color:var(--amber);border-color:var(--amber)}
+.tbtn:active{transform:translateY(1px)}
+.tbtn .ic{width:22px;height:22px}
+.tbtn .ten{position:absolute;left:50%;top:50%;transform:translate(-50%,-46%);font-family:var(--mono);font-size:8.5px;font-weight:600}
+.playbtn{position:relative;width:86px;height:86px;display:grid;place-items:center;transition:.2s}
+.playbtn .ring{position:absolute;inset:0;width:100%;height:100%;transform:rotate(-90deg)}
+.playbtn .rbg{fill:none;stroke:#26262d;stroke-width:4}
+.playbtn .rfg{fill:none;stroke:var(--amber);stroke-width:4;stroke-dasharray:283;stroke-dashoffset:283}
+.playbtn .glyph{width:30px;height:30px;color:var(--ink);transition:.15s}
+.playbtn:hover .glyph{color:var(--amber);transform:scale(1.08)}
+/* drive mode scales up */
+body.drive .road{height:46px}
+body.drive .road-car{width:32px;height:32px;margin:-16px 0 0 -16px}
+body.drive .road-car .ic{width:20px;height:20px}
+body.drive .t-controls{gap:30px;margin:18px 0 10px}
+body.drive .tbtn{width:62px;height:62px}
+body.drive .playbtn{width:106px;height:106px}
+body.drive .playbtn .glyph{width:38px;height:38px}
+/* readouts */
+.readouts{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;border-top:1px solid var(--line);padding-top:10px}
+.ro{display:flex;align-items:center;gap:9px;text-decoration:none;color:inherit}
+.rol{font-size:9.5px;letter-spacing:.2em;color:var(--ink3)}
+.val{font-size:16px;color:var(--ink);font-weight:500}
+body.drive .val{font-size:19px}
+.mini{width:24px;height:24px;border:1px solid var(--line2);color:var(--ink2);font-family:var(--mono);font-size:13px;line-height:1;display:grid;place-items:center;transition:.15s}
+.mini:hover{color:var(--amber);border-color:var(--amber)}
+.mini .ic{width:14px;height:14px}
+a.ext{color:var(--ink2)}
+a.ext:hover{color:var(--amber)}
+.slider{-webkit-appearance:none;appearance:none;height:3px;background:#2b2b33;outline:0;cursor:pointer}
+.slider::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;background:var(--amber);cursor:pointer}
+.slider::-moz-range-thumb{width:14px;height:14px;background:var(--amber);border:0;border-radius:0;cursor:pointer}
+.vol-slider{width:110px}
 
-  .touch-btn{
-    min-width:54px;min-height:54px;
-    display:flex;align-items:center;justify-content:center;
-    transition:all .15s;
-  }
-  .touch-btn:active{transform:scale(.94)}
+/* ============ manifest panel ============ */
+.manifest{width:392px;flex:0 0 392px;border-left:1px solid var(--line);background:var(--panel);display:flex;flex-direction:column;min-height:0}
+.tabs{display:flex;align-items:stretch;border-bottom:1px solid var(--line);height:46px;flex:0 0 46px}
+.tab{flex:1;display:flex;align-items:center;justify-content:center;gap:8px;font-size:11px;letter-spacing:.24em;color:var(--ink3);border-bottom:2px solid transparent;margin-bottom:-1px;transition:.15s}
+.tab:hover{color:var(--ink2)}
+.tab.on{color:var(--ink);border-bottom-color:var(--amber)}
+.tab .cnt{font-size:9px;color:var(--amber);border:1px solid rgba(255,176,0,.35);padding:1px 5px}
+.tab-act{width:46px;display:grid;place-items:center;color:var(--ink3);transition:.15s}
+.tab-act:hover{color:var(--red)}
+.tab-act.arm{color:var(--red);border-bottom:2px solid var(--red);margin-bottom:-1px}
+.tabpane{flex:1;overflow-y:auto;min-height:0;display:none}
+.tabpane.show{display:block}
+.q-tools{display:flex;align-items:center;gap:8px;padding:10px 14px;border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--panel);z-index:2}
+.qbtn{width:32px;height:32px;border:1px solid var(--line2);display:grid;place-items:center;color:var(--ink3);position:relative;transition:.15s}
+.qbtn:hover{color:var(--ink)}
+.qbtn.on{color:var(--amber);border-color:var(--amber);background:var(--amber-dim)}
+.qbtn .ic{width:15px;height:15px}
+.qbtn .r1{position:absolute;font-family:var(--mono);font-size:8px;font-weight:600;top:2px;right:3px;display:none}
+.q-hint{margin-left:auto;font-size:9px;letter-spacing:.18em;color:var(--ink3)}
+.qrow{display:flex;align-items:center;gap:12px;padding:10px 14px 10px 12px;border-bottom:1px solid #1c1c21;cursor:pointer;border-left:2px solid transparent;transition:background .12s}
+.qrow:hover{background:var(--panel2)}
+.qrow.cur{border-left-color:var(--amber);background:#17171c}
+.q-idx{width:24px;flex:0 0 24px;text-align:center;color:var(--ink3);font-size:11px}
+.q-live{display:inline-flex;gap:2px;align-items:flex-end;height:12px}
+.q-live i{width:3px;background:var(--amber);height:4px}
+.qrow.cur .q-live i{animation:qlive .7s ease-in-out infinite alternate}
+.q-live i:nth-child(2){animation-delay:.2s}
+.q-live i:nth-child(3){animation-delay:.35s}
+@keyframes qlive{to{height:12px}}
+.q-meta{flex:1;min-width:0}
+.q-title{font-size:14.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.q-author{font-size:9.5px;letter-spacing:.14em;color:var(--ink3);margin-top:2px;text-transform:uppercase}
+.q-dur{color:var(--ink3);font-size:11px}
+.q-x{width:26px;height:26px;flex:0 0 26px;color:var(--ink3);display:grid;place-items:center}
+.q-x:hover{color:var(--red)}
+.q-x .ic{width:13px;height:13px}
+.q-empty{text-align:center;color:var(--ink3);font-size:10.5px;letter-spacing:.22em;line-height:2.1;padding:50px 20px}
+/* search */
+.search-status{padding:16px 16px;font-size:10.5px;letter-spacing:.16em;color:var(--ink2);display:none;line-height:2}
+.search-status.show{display:block}
+.search-status.err{color:var(--red)}
+.search-status.busy::after{content:'▍';color:var(--amber);animation:blink 1s steps(2) infinite}
+@keyframes blink{50%{opacity:0}}
+.rrow{display:flex;gap:12px;padding:10px 14px;border-bottom:1px solid #1c1c21;cursor:pointer;transition:background .12s}
+.rrow:hover{background:var(--panel2)}
+.rthumb{position:relative;width:112px;height:63px;flex:0 0 112px;background:#1a1a20;overflow:hidden}
+.rthumb img{width:100%;height:100%;object-fit:cover;display:block;filter:saturate(.85)}
+.rdur{position:absolute;right:4px;bottom:4px;background:rgba(0,0,0,.82);color:var(--ink);font-size:9.5px;padding:1px 4px}
+.rmeta{flex:1;min-width:0;display:flex;flex-direction:column;justify-content:center;gap:5px}
+.rtitle{font-size:14px;font-weight:600;line-height:1.25;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.rauthor{font-size:9.5px;letter-spacing:.14em;color:var(--ink3);text-transform:uppercase}
+.radd{width:30px;height:30px;align-self:center;border:1px solid var(--line2);color:var(--ink3);display:grid;place-items:center;flex:0 0 30px;transition:.15s}
+.radd:hover{color:var(--amber);border-color:var(--amber)}
+.radd .ic{width:14px;height:14px}
 
-  .toast{
-    animation:slideIn .3s ease, fadeOut .3s ease 2.7s forwards;
-  }
-  @keyframes slideIn{from{transform:translateX(120%);opacity:0}to{transform:translateX(0);opacity:1}}
-  @keyframes fadeOut{to{transform:translateX(120%);opacity:0}}
+/* ============ status bar / overlays ============ */
+.statusbar{flex:0 0 30px;display:flex;align-items:center;justify-content:space-between;padding:0 16px;border-top:1px solid var(--line);background:var(--panel);font-size:9.5px;letter-spacing:.18em;color:var(--ink3)}
+.dot{display:inline-block;width:6px;height:6px;background:#59d98c;margin-right:7px;vertical-align:1px}
+.dimmer{position:fixed;inset:0;background:#000;opacity:0;pointer-events:none;z-index:90;transition:opacity .3s}
+.toasts{position:fixed;left:50%;bottom:46px;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:8px;z-index:110;pointer-events:none}
+.toast{background:#101014;border:1px solid var(--line2);border-left:3px solid var(--amber);color:var(--ink);font-family:var(--mono);font-size:11px;letter-spacing:.12em;padding:10px 16px;opacity:0;transform:translateY(8px);transition:.25s;max-width:80vw}
+.toast.in{opacity:1;transform:none}
+.toast.bad{border-left-color:var(--red)}
+.vbadge{position:fixed;right:18px;bottom:44px;z-index:95;display:flex;align-items:center;gap:9px;background:#101014;border:1px solid var(--amber);color:var(--amber);font-size:10.5px;letter-spacing:.16em;padding:9px 13px}
+.vbadge::before{content:'';width:7px;height:7px;background:var(--amber);border-radius:50%;animation:vp 1.2s ease-in-out infinite}
+@keyframes vp{50%{opacity:.25}}
+.modal{position:fixed;inset:0;z-index:100;display:grid;place-items:center;background:rgba(5,5,7,.72);opacity:0;visibility:hidden;transition:.2s}
+.modal.show{opacity:1;visibility:visible}
+.modal-card{width:min(460px,92vw);background:#101014;border:1px solid var(--line2);transform:translateY(6px);transition:.25s}
+.modal.show .modal-card{transform:none}
+.modal-head{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid var(--line);font-size:12px;letter-spacing:.28em;color:var(--amber)}
+.modal-head button{color:var(--ink2)}
+.modal-head button:hover{color:var(--amber)}
+.modal-head .ic{width:15px;height:15px}
+.keys{width:100%;border-collapse:collapse}
+.keys td{padding:9px 18px;border-bottom:1px solid #1c1c21;font-size:11px;color:var(--ink2);letter-spacing:.06em}
+.keys td:first-child{width:150px;white-space:nowrap}
+.keys tr:last-child td{border-bottom:0}
+kbd{display:inline-block;border:1px solid var(--line2);background:#17171c;padding:2px 7px;font-family:var(--mono);font-size:10px;color:var(--ink);margin:1px 3px 1px 0;border-bottom-width:2px}
+.modal-foot{padding:12px 18px;border-top:1px solid var(--line);font-size:9.5px;letter-spacing:.14em;color:var(--ink3);line-height:1.9}
 
-  .loader-ring{
-    border:3px solid rgba(255,45,77,.2);
-    border-top-color:var(--accent);
-    animation:spin .8s linear infinite;
-  }
-  @keyframes spin{to{transform:rotate(360deg)}}
-
-  .tab-btn{position:relative;transition:all .2s;color:var(--muted)}
-  .tab-btn.active{color:var(--accent)}
-  .tab-btn.active::after{
-    content:'';position:absolute;bottom:-1px;left:0;right:0;height:2px;
-    background:var(--accent);box-shadow:0 0 10px var(--accent);
-  }
-
-  input[type=range]{
-    -webkit-appearance:none;appearance:none;
-    height:5px;background:rgba(255,255,255,.08);border-radius:2px;outline:none;
-  }
-  input[type=range]::-webkit-slider-thumb{
-    -webkit-appearance:none;appearance:none;width:18px;height:18px;
-    background:var(--accent);border-radius:50%;cursor:pointer;
-    box-shadow:0 0 12px var(--accent-glow);
-  }
-
-  .toggle{
-    width:46px;height:24px;background:rgba(255,255,255,.1);
-    border-radius:12px;position:relative;cursor:pointer;transition:all .25s;
-  }
-  .toggle.on{background:var(--accent);box-shadow:0 0 12px var(--accent-glow)}
-  .toggle::after{
-    content:'';position:absolute;top:2px;left:2px;width:20px;height:20px;
-    background:#fff;border-radius:50%;transition:all .25s;
-  }
-  .toggle.on::after{transform:translateX(22px)}
-
-  .speed-btn.active{background:rgba(255,45,77,.18);color:var(--accent)}
-
-  /* Spectrum bars for "now playing" decoration */
-  .eq-bar{
-    width:3px;background:linear-gradient(var(--accent),var(--accent-2));
-    border-radius:2px;
-    animation:eq 1s ease-in-out infinite;
-  }
-  @keyframes eq{0%,100%{height:4px}50%{height:18px}}
-
-  /* Subtle vignette on player */
-  .vignette::after{
-    content:'';position:absolute;inset:0;
-    box-shadow:inset 0 0 120px rgba(0,0,0,.5);
-    pointer-events:none;
-  }
-
-  /* Hide scrollbar in suggested strip */
-  .no-scrollbar::-webkit-scrollbar{height:6px}
+/* ============ responsive ============ */
+.panel-btn{display:none}
+.backdrop{display:none;position:absolute;inset:0;z-index:55;background:rgba(0,0,0,.45)}
+@media (max-width:1080px){
+  .manifest{position:absolute;top:0;right:0;bottom:0;z-index:60;transform:translateX(100%);transition:transform .3s;box-shadow:-14px 0 40px rgba(0,0,0,.5)}
+  body.panel-open .manifest{transform:none}
+  body.panel-open .backdrop{display:block}
+  .panel-btn{display:grid}
+}
+@media (max-width:900px){.sb-c{display:none}}
+@media (max-width:760px){
+  header{flex-wrap:wrap;height:auto;flex:0 0 auto;padding:10px 12px;gap:10px}
+  .command{order:3;flex-basis:100%;max-width:none}
+  .brand-sub{display:none}
+  .stage{padding:12px}
+  .plate-title{font-size:26px}
+  .manifest{width:min(392px,94vw)}
+}
+@media (prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;transition-duration:.01ms!important}}
 </style>
 </head>
 <body>
 
-<!-- Ambient background -->
-<div class="fixed inset-0 cyber-grid pointer-events-none opacity-40"></div>
-<div class="blob" style="width:520px;height:520px;top:-120px;left:-120px;background:#ff2d4d"></div>
-<div class="blob" style="width:420px;height:420px;bottom:-120px;right:-100px;background:#7c3aed;animation-delay:5s"></div>
-<div class="blob" style="width:300px;height:300px;top:40%;left:40%;background:#ff6b3d;animation-delay:10s;opacity:.08"></div>
+<!-- ======== icon set (inline, no CDN dependency) ======== -->
+<svg xmlns="http://www.w3.org/2000/svg" style="display:none">
+  <symbol id="i-road" viewBox="0 0 24 24">
+    <path d="M8.2 21 10.8 3h2.4L15.8 21z" fill="currentColor" opacity=".16"/>
+    <path d="M8.2 21 10.8 3M15.8 21 13.2 3" fill="none" stroke="currentColor" stroke-width="1.7"/>
+    <path d="M12 5.4v2.3M12 10.3v2.8M12 15.7v2.8" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+  </symbol>
+  <symbol id="i-search" viewBox="0 0 24 24">
+    <circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="2"/>
+    <path d="M21 21l-4.3-4.3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+  </symbol>
+  <symbol id="i-power" viewBox="0 0 24 24">
+    <path d="M12 3v8" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>
+    <path d="M6.3 6.5a8 8 0 1 0 11.4 0" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>
+  </symbol>
+  <symbol id="i-play" viewBox="0 0 24 24"><path d="M8 5.2v13.6L19 12z" fill="currentColor"/></symbol>
+  <symbol id="i-pause" viewBox="0 0 24 24"><path d="M7 5h3.6v14H7zM13.4 5H17v14h-3.6z" fill="currentColor"/></symbol>
+  <symbol id="i-skipback" viewBox="0 0 24 24"><path d="M6 5h2.3v14H6z" fill="currentColor"/><path d="M19 5.8v12.4L9.5 12z" fill="currentColor"/></symbol>
+  <symbol id="i-skipfwd" viewBox="0 0 24 24"><path d="M15.7 5H18v14h-2.3z" fill="currentColor"/><path d="M5 5.8v12.4L14.5 12z" fill="currentColor"/></symbol>
+  <symbol id="i-rew" viewBox="0 0 24 24">
+    <path d="M3.5 12a8.5 8.5 0 1 0 2.5-6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+    <path d="M3.5 2.8v5h5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  </symbol>
+  <symbol id="i-fwd" viewBox="0 0 24 24">
+    <path d="M20.5 12a8.5 8.5 0 1 1-2.5-6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+    <path d="M20.5 2.8v5h-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  </symbol>
+  <symbol id="i-car" viewBox="0 0 24 24">
+    <path d="M3 14.2v-1.9c0-.8.5-1.5 1.2-1.8l1.6-3.8c.3-.7 1-1.2 1.8-1.2h3.1l2.1-2c.3-.3.7-.5 1.2-.5h2.7c.8 0 1.5.5 1.8 1.2l1.5 3.9c.8.3 1.4 1 1.4 1.9v2.2H3z" fill="currentColor"/>
+    <circle cx="7.4" cy="15" r="2.4" fill="currentColor"/>
+    <circle cx="16.6" cy="15" r="2.4" fill="currentColor"/>
+  </symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></symbol>
+  <symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></symbol>
+  <symbol id="i-mic" viewBox="0 0 24 24">
+    <rect x="9" y="3" width="6" height="11" rx="3" fill="none" stroke="currentColor" stroke-width="2"/>
+    <path d="M5.5 11.5a6.5 6.5 0 0 0 13 0M12 18v3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+  </symbol>
+  <symbol id="i-moon" viewBox="0 0 24 24"><path d="M20.2 13.6A8.2 8.2 0 1 1 10.4 3.8a6.8 6.8 0 0 0 9.8 9.8z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></symbol>
+  <symbol id="i-shuffle" viewBox="0 0 24 24">
+    <path d="M3 7h3.5L17 17h4M3 17h3.5L17 7h4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M18.5 4.5 21 7l-2.5 2.5M18.5 14.5 21 17l-2.5 2.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  </symbol>
+  <symbol id="i-repeat" viewBox="0 0 24 24">
+    <path d="m17 2 4 4-4 4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M3 12v-2a4 4 0 0 1 4-4h14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+    <path d="m7 22-4-4 4-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M21 12v2a4 4 0 0 1-4 4H3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+  </symbol>
+  <symbol id="i-trash" viewBox="0 0 24 24"><path d="M4 7h16M9.5 7V4.5h5V7M6.5 7l1 13h9l1-13M10 11v5.5M14 11v5.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-vol" viewBox="0 0 24 24">
+    <path d="M11 5.5 6.5 9H3.5v6h3L11 18.5z" fill="currentColor"/>
+    <path d="M14.5 9a4.4 4.4 0 0 1 0 6M17 6.5a8 8 0 0 1 0 11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+  </symbol>
+  <symbol id="i-volx" viewBox="0 0 24 24">
+    <path d="M11 5.5 6.5 9H3.5v6h3L11 18.5z" fill="currentColor"/>
+    <path d="m15 9.5 5 5M20 9.5l-5 5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+  </symbol>
+  <symbol id="i-ext" viewBox="0 0 24 24">
+    <path d="M14 4h6v6M20 4 11 13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M20 13.5V19a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 19V6a1.5 1.5 0 0 1 1.5-1.5H10" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+  </symbol>
+  <symbol id="i-key" viewBox="0 0 24 24">
+    <rect x="2.5" y="6" width="19" height="12" rx="1.5" fill="none" stroke="currentColor" stroke-width="2"/>
+    <path d="M6.5 10h.01M10.3 10h.01M14.1 10h.01M17.9 10h.01M6.5 14h.01M17.9 14h.01M9.5 14h5" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/>
+  </symbol>
+  <symbol id="i-list" viewBox="0 0 24 24"><path d="M4 6h16M4 12h10M4 18h7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+</svg>
 
-<div class="relative h-screen flex flex-col">
-
-  <!-- TOP BAR -->
-  <header class="glass border-b flex-shrink-0 z-20">
-    <div class="flex items-center justify-between gap-4 px-5 py-3">
-      <div class="flex items-center gap-3">
-        <div class="w-11 h-11 rounded-xl bg-gradient-to-br from-red-500 to-orange-500 flex items-center justify-center accent-glow">
-          <i class="fas fa-bolt text-white text-lg"></i>
-        </div>
-        <div>
-          <h1 class="font-display font-black text-lg leading-none">CYBER<span class="text-red-500">STREAM</span></h1>
-          <p class="text-[10px] text-gray-500 mt-0.5 tracking-widest">TESA DASHBOARD PLAYER</p>
-        </div>
-        <div class="hidden lg:flex items-center gap-2 ml-3 px-3 py-1.5 rounded-full glass">
-          <span class="w-2 h-2 rounded-full bg-green-400 rec-dot"></span>
-          <span class="text-[11px] text-gray-400 font-mono">SYSTEM ONLINE</span>
-        </div>
-      </div>
-
-      <!-- URL input -->
-      <div class="flex-1 max-w-2xl">
-        <div class="relative">
-          <i class="fas fa-link absolute left-4 top-1/2 -translate-y-1/2 text-gray-500"></i>
-          <input id="urlInput" type="text" placeholder="Paste YouTube URL or video ID..."
-            class="w-full bg-black/40 border border-white/10 rounded-full pl-11 pr-28 py-3 text-sm focus:outline-none focus:border-red-500 focus:ring-2 focus:ring-red-500/20 transition" />
-          <button id="loadBtn" class="btn-primary absolute right-1 top-1/2 -translate-y-1/2 px-5 py-2 rounded-full text-sm font-semibold">
-            <i class="fas fa-play mr-1.5"></i>LOAD
-          </button>
-        </div>
-      </div>
-
-      <div class="flex items-center gap-2">
-        <div class="hidden md:flex items-center gap-3 mr-2 px-3 py-1.5 rounded-lg glass">
-          <div class="flex items-end gap-0.5 h-5" id="eqViz">
-            <div class="eq-bar" style="animation-delay:0s"></div>
-            <div class="eq-bar" style="animation-delay:.15s"></div>
-            <div class="eq-bar" style="animation-delay:.3s"></div>
-            <div class="eq-bar" style="animation-delay:.45s"></div>
-            <div class="eq-bar" style="animation-delay:.6s"></div>
-          </div>
-          <span class="text-[11px] font-mono text-gray-400" id="signalLabel">STANDBY</span>
-        </div>
-        <button id="settingsBtn" class="touch-btn rounded-lg glass hover:bg-white/5" title="Settings">
-          <i class="fas fa-cog text-gray-400"></i>
-        </button>
-        <button id="fullscreenBtn" class="touch-btn rounded-lg glass hover:bg-white/5" title="Fullscreen">
-          <i class="fas fa-expand text-gray-400"></i>
-        </button>
-      </div>
-    </div>
-  </header>
-
-  <!-- MAIN -->
-  <main class="flex-1 flex overflow-hidden">
-
-    <!-- SIDEBAR -->
-    <aside id="sidebar" class="w-80 glass border-r flex flex-col flex-shrink-0">
-      <div class="flex border-b border-white/5 flex-shrink-0">
-        <button class="tab-btn active flex-1 py-3.5 text-sm font-medium font-display" data-tab="queue">
-          <i class="fas fa-list-ol mr-1.5"></i>QUEUE
-        </button>
-        <button class="tab-btn flex-1 py-3.5 text-sm font-medium font-display" data-tab="history">
-          <i class="fas fa-clock-rotate-left mr-1.5"></i>HISTORY
-        </button>
-        <button class="tab-btn flex-1 py-3.5 text-sm font-medium font-display" data-tab="saved">
-          <i class="fas fa-bookmark mr-1.5"></i>SAVED
-        </button>
-      </div>
-
-      <div class="flex-1 overflow-y-auto" id="sidebarContent"></div>
-
-      <div class="border-t border-white/5 p-3 flex-shrink-0">
-        <div class="relative">
-          <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm"></i>
-          <input id="searchInput" type="text" placeholder="Search YouTube..."
-            class="w-full bg-black/40 border border-white/10 rounded-lg pl-9 pr-3 py-2.5 text-sm focus:outline-none focus:border-red-500 transition" />
-        </div>
-        <div class="mt-2 flex items-center justify-between text-xs">
-          <span class="text-gray-500">API: <span id="apiStatusText" class="text-yellow-400">Not configured</span></span>
-          <button id="configApiBtn" class="text-red-400 hover:text-red-300 font-medium">Configure</button>
-        </div>
-      </div>
-    </aside>
-
-    <!-- PLAYER AREA -->
-    <section class="flex-1 flex flex-col min-w-0">
-      <div class="flex-1 flex items-center justify-center p-5 relative">
-        <div class="w-full max-w-6xl aspect-video relative bg-black rounded-2xl overflow-hidden shadow-2xl border border-white/5 scan-effect vignette" id="playerWrapper">
-          <div id="player" class="absolute inset-0"></div>
-
-          <!-- Empty state -->
-          <div id="emptyState" class="absolute inset-0 flex flex-col items-center justify-center text-center p-8 z-10">
-            <div class="relative mb-6">
-              <div class="w-28 h-28 rounded-full bg-gradient-to-br from-red-500/20 to-purple-500/10 border border-red-500/30 flex items-center justify-center accent-glow">
-                <i class="fas fa-play text-4xl text-red-500 ml-1"></i>
-              </div>
-              <div class="absolute -inset-2 rounded-full border border-red-500/20 animate-ping" style="animation-duration:3s"></div>
-            </div>
-            <h2 class="font-display text-3xl font-black mb-2">NO SIGNAL</h2>
-            <p class="text-gray-400 max-w-md text-sm">Paste a YouTube URL above, or pick a video from the suggested feed below to start streaming.</p>
-            <div class="mt-6 flex gap-3">
-              <button class="btn-primary px-5 py-2.5 rounded-full text-sm font-semibold" onclick="loadDemoVideo()">
-                <i class="fas fa-bolt mr-1.5"></i>TRY DEMO
-              </button>
-              <button class="glass px-5 py-2.5 rounded-full text-sm font-semibold hover:bg-white/5" onclick="document.getElementById('urlInput').focus()">
-                <i class="fas fa-paste mr-1.5"></i>PASTE URL
-              </button>
-            </div>
-            <p class="text-[11px] text-gray-600 mt-6 font-mono">v1.0 · TESLA BROWSER READY</p>
-          </div>
-        </div>
-      </div>
-
-      <!-- CONTROL BAR -->
-      <div class="glass border-t flex-shrink-0">
-        <div class="px-5 py-3">
-          <div class="flex items-center justify-between mb-2.5 gap-4">
-            <div class="flex-1 min-w-0">
-              <h3 id="nowPlayingTitle" class="text-sm font-semibold truncate">— No video loaded —</h3>
-              <p id="nowPlayingChannel" class="text-xs text-gray-500 truncate">Ready to play</p>
-            </div>
-            <div class="flex items-center gap-2 ml-4 font-mono text-xs">
-              <span id="currentTime" class="text-red-400">00:00</span>
-              <span class="text-gray-600">/</span>
-              <span id="duration" class="text-gray-400">00:00</span>
-            </div>
-          </div>
-
-          <div class="relative mb-3">
-            <input type="range" id="progressBar" min="0" max="100" value="0" class="w-full" />
-          </div>
-
-          <div class="flex items-center justify-between gap-3 flex-wrap">
-            <div class="flex items-center gap-2">
-              <button id="prevBtn" class="touch-btn rounded-lg glass hover:bg-white/10" title="Previous">
-                <i class="fas fa-backward"></i>
-              </button>
-              <button id="playPauseBtn" class="touch-btn rounded-lg btn-primary px-6" title="Play / Pause">
-                <i class="fas fa-play" id="playPauseIcon"></i>
-              </button>
-              <button id="nextBtn" class="touch-btn rounded-lg glass hover:bg-white/10" title="Next">
-                <i class="fas fa-forward"></i>
-              </button>
-              <button id="loopBtn" class="touch-btn rounded-lg glass hover:bg-white/10" title="Loop">
-                <i class="fas fa-repeat" id="loopIcon"></i>
-              </button>
-              <button id="muteBtn" class="touch-btn rounded-lg glass hover:bg-white/10" title="Mute">
-                <i class="fas fa-volume-high" id="muteIcon"></i>
-              </button>
-            </div>
-
-            <div class="flex items-center gap-2">
-              <span class="text-[11px] text-gray-500 font-mono">SPEED</span>
-              <div class="flex items-center gap-1">
-                <button class="speed-btn px-3 py-1.5 rounded text-xs font-mono glass hover:bg-white/5" data-speed="0.5">0.5×</button>
-                <button class="speed-btn px-3 py-1.5 rounded text-xs font-mono glass hover:bg-white/5 active" data-speed="1">1×</button>
-                <button class="speed-btn px-3 py-1.5 rounded text-xs font-mono glass hover:bg-white/5" data-speed="1.25">1.25×</button>
-                <button class="speed-btn px-3 py-1.5 rounded text-xs font-mono glass hover:bg-white/5" data-speed="1.5">1.5×</button>
-                <button class="speed-btn px-3 py-1.5 rounded text-xs font-mono glass hover:bg-white/5" data-speed="2">2×</button>
-              </div>
-            </div>
-
-            <div class="flex items-center gap-2">
-              <button id="saveBtn" class="touch-btn rounded-lg glass hover:bg-white/10" title="Save to favorites">
-                <i class="far fa-bookmark" id="saveIcon"></i>
-              </button>
-              <button id="shareBtn" class="touch-btn rounded-lg glass hover:bg-white/10" title="Copy link">
-                <i class="fas fa-link"></i>
-              </button>
-              <button id="theaterBtn" class="touch-btn rounded-lg glass hover:bg-white/10" title="Theater mode">
-                <i class="fas fa-compress"></i>
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- SUGGESTED -->
-      <div class="glass border-t flex-shrink-0" style="max-height:240px;overflow-y:auto;">
-        <div class="px-5 py-2.5 border-b border-white/5 flex items-center justify-between sticky top-0 glass z-10">
-          <h3 class="font-display text-sm font-bold"><i class="fas fa-fire text-red-500 mr-2"></i>SUGGESTED FEED</h3>
-          <span class="text-[11px] text-gray-500 font-mono">CURATED · 8 ITEMS</span>
-        </div>
-        <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 p-3" id="suggestedGrid"></div>
-      </div>
-    </section>
-  </main>
-
-  <!-- Toasts -->
-  <div id="toastContainer" class="fixed bottom-6 right-6 z-50 flex flex-col gap-2"></div>
-
-  <!-- Settings modal -->
-  <div id="settingsModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/70 backdrop-blur-sm p-4">
-    <div class="glass rounded-2xl max-w-md w-full p-6">
-      <div class="flex items-center justify-between mb-5">
-        <h2 class="font-display text-xl font-bold">SETTINGS</h2>
-        <button id="closeSettings" class="text-gray-400 hover:text-white">
-          <i class="fas fa-times text-xl"></i>
-        </button>
-      </div>
-
-      <div class="space-y-4">
-        <div>
-          <label class="text-sm font-semibold block mb-2">YouTube Data API Key</label>
-          <input id="apiKeyInput" type="password" placeholder="AIza..."
-            class="w-full bg-black/40 border border-white/10 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-red-500" />
-          <p class="text-[11px] text-gray-500 mt-1.5">Enables search. Stored only in this browser. Get a key from Google Cloud Console.</p>
-        </div>
-
-        <div class="flex items-center justify-between py-1">
-          <div>
-            <p class="text-sm font-semibold">Autoplay Next</p>
-            <p class="text-[11px] text-gray-500">Continue queue automatically</p>
-          </div>
-          <div id="autoplayToggle" class="toggle on" data-state="on"></div>
-        </div>
-
-        <div class="flex items-center justify-between py-1">
-          <div>
-            <p class="text-sm font-semibold">Loop Current</p>
-            <p class="text-[11px] text-gray-500">Repeat the same video</p>
-          </div>
-          <div id="loopToggle" class="toggle" data-state="off"></div>
-        </div>
-
-        <div class="flex items-center justify-between py-1">
-          <div>
-            <p class="text-sm font-semibold">Default Quality</p>
-            <p class="text-[11px] text-gray-500">Recommended: 360p–720p</p>
-          </div>
-          <select id="qualitySelect" class="bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-sm">
-            <option value="auto">Auto</option>
-            <option value="small">144p</option>
-            <option value="medium">360p</option>
-            <option value="large">480p</option>
-            <option value="hd720">720p</option>
-            <option value="hd1080">1080p</option>
-          </select>
-        </div>
-
-        <div class="pt-4 border-t border-white/10 space-y-2">
-          <p class="text-[11px] text-gray-500 font-mono">Keyboard: Space play/pause · ←/→ seek · ↑/↓ volume · N next · P previous</p>
-          <button id="clearDataBtn" class="w-full py-2.5 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500/20 text-sm font-semibold">
-            <i class="fas fa-trash mr-2"></i>Clear All Local Data
-          </button>
-        </div>
-      </div>
+<header>
+  <div class="brand">
+    <svg class="mark"><use href="#i-road"/></svg>
+    <div>
+      <div class="brand-name">AUTOBAHN</div>
+      <div class="brand-sub mono">YOUTUBE · COCKPIT</div>
     </div>
   </div>
 
-  <!-- Safety notice -->
-  <div id="safetyNotice" class="fixed bottom-4 left-1/2 -translate-x-1/2 z-40 glass rounded-full px-5 py-2 flex items-center gap-2 text-xs">
-    <i class="fas fa-triangle-exclamation text-yellow-400"></i>
-    <span class="text-gray-300">For passenger use or when parked only. Keep your eyes on the road.</span>
-    <button id="dismissSafety" class="text-gray-500 hover:text-white ml-2">
-      <i class="fas fa-times"></i>
+  <form class="command" id="command" autocomplete="off">
+    <svg class="ic lead"><use href="#i-search"/></svg>
+    <input id="cmdInput" type="text" spellcheck="false"
+           placeholder="paste a youtube link · or type a search — enter to run">
+    <button class="go" type="submit">RUN</button>
+  </form>
+
+  <div class="hactions">
+    <button class="hbtn" id="voiceBtn" title="Voice control"><svg class="ic"><use href="#i-mic"/></svg></button>
+    <button class="hbtn" id="keyBtn" title="Key commands (?)"><svg class="ic"><use href="#i-key"/></svg></button>
+    <div class="dimwrap" id="dimwrap">
+      <button class="hbtn" id="dimBtn" title="Night dim"><svg class="ic"><use href="#i-moon"/></svg></button>
+      <div class="dim-pop mono">
+        <span class="rol">NIGHT DIM</span>
+        <input type="range" class="slider" id="dimSlider" min="0" max="70" step="5" value="0">
+        <span id="dimVal">0%</span>
+      </div>
+    </div>
+    <button class="driveswitch" id="driveSwitch" aria-pressed="false" title="Drive mode (D)">
+      <span class="ds-track"><span class="ds-knob"></span></span>
+      <svg class="ic dsi"><use href="#i-car"/></svg>
+      <span class="ds-label mono" id="driveLabel">PARK</span>
     </button>
+    <button class="hbtn panel-btn" id="panelBtn" title="Deck panel"><svg class="ic"><use href="#i-list"/></svg></button>
   </div>
+</header>
 
+<main id="main">
+  <section class="stage">
+    <div class="screen-head mono"><span>FEED 01 · YOUTUBE</span><span id="modeTag">PARK MODE</span></div>
+
+    <div class="screen" id="screenEl">
+      <i class="corner"></i>
+      <div class="video-wrap"><div id="yt-frame"></div></div>
+      <div class="spool mono" id="spool" hidden>SPOOLING SIGNAL</div>
+
+      <!-- driver-safe instrument plate (drive mode) -->
+      <div class="plate" id="plate">
+        <div class="plate-art" id="plateArt"></div>
+        <div class="plate-veil"></div>
+        <div class="plate-body">
+          <div class="plate-eyebrow mono">AUDIO CHANNEL ACTIVE · EYES ON THE ROAD</div>
+          <h1 class="plate-title" id="plateTitle">NO SIGNAL</h1>
+          <div class="plate-author mono" id="plateAuthor">—</div>
+          <div class="eq"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+        </div>
+        <div class="plate-clock" id="plateClock">00:00</div>
+        <div class="plate-badge mono">VIDEO SUPPRESSED</div>
+        <button class="passbtn mono" id="passBtn" title="Show video (passenger)">
+          <svg class="ic"><use href="#i-key"/></svg>PASSENGER — SHOW VIDEO
+        </button>
+      </div>
+      <button class="paxchip mono" id="paxChip" title="Back to driver-safe view">DRIVER VIEW</button>
+
+      <!-- standby / ignition -->
+      <div class="ignition show" id="ignition">
+        <button class="ig-ring" id="igRing" title="Begin">
+          <svg class="dash" viewBox="0 0 120 120"><circle cx="60" cy="60" r="56" fill="none" stroke="currentColor" stroke-width="2" stroke-dasharray="10 14"/></svg>
+          <svg class="ic big"><use href="#i-power"/></svg>
+        </button>
+        <div class="ig-title">STANDBY</div>
+        <div class="ig-sub mono">PASTE A LINK OR SEARCH — PRESS ENTER</div>
+        <div class="ig-chips" id="igChips"></div>
+      </div>
+
+      <div class="sweep"></div>
+    </div>
+
+    <!-- transport -->
+    <div class="transport">
+      <div class="road" id="road">
+        <div class="road-fill" id="roadFill"></div>
+        <div class="road-car" id="roadCar"><svg class="ic"><use href="#i-car"/></svg></div>
+        <div class="road-tip mono" id="roadTip">0:00</div>
+      </div>
+
+      <div class="t-controls">
+        <button class="tbtn" id="prevBtn" title="Previous (P)"><svg class="ic"><use href="#i-skipback"/></svg></button>
+        <button class="tbtn" id="backBtn" title="Back 10s (J)"><svg class="ic"><use href="#i-rew"/></svg><span class="ten">10</span></button>
+        <button class="playbtn" id="playBtn" title="Play / pause (Space)">
+          <svg class="ring" viewBox="0 0 100 100"><circle class="rbg" cx="50" cy="50" r="45"/><circle class="rfg" id="ringFg" cx="50" cy="50" r="45"/></svg>
+          <svg class="glyph"><use id="playUse" href="#i-play"/></svg>
+        </button>
+        <button class="tbtn" id="fwdBtn" title="Forward 10s (L)"><svg class="ic"><use href="#i-fwd"/></svg><span class="ten">10</span></button>
+        <button class="tbtn" id="nextBtn" title="Next (N)"><svg class="ic"><use href="#i-skipfwd"/></svg></button>
+      </div>
+
+      <div class="readouts mono">
+        <div class="ro"><span class="rol">ELAPSED</span><span class="val" id="roElapsed">00:00</span></div>
+        <div class="ro"><span class="rol">REMAIN</span><span class="val" id="roRemain">--:--</span></div>
+        <div class="ro">
+          <span class="rol">RATE</span>
+          <button class="mini" id="rateDown" title="Slower">−</button>
+          <span class="val" id="roRate">1.00×</span>
+          <button class="mini" id="rateUp" title="Faster">+</button>
+        </div>
+        <div class="ro">
+          <button class="mini" id="muteBtn" title="Mute (M)"><svg class="ic"><use id="volUse" href="#i-vol"/></svg></button>
+          <span class="rol">VOL</span>
+          <input type="range" class="slider vol-slider" id="volSlider" min="0" max="100" step="1" value="80">
+          <span class="val" id="roVol">080</span>
+        </div>
+        <a class="ro ext" id="extLink" href="#" target="_blank" rel="noopener"><span class="rol">SOURCE</span><svg class="ic" style="width:15px;height:15px"><use href="#i-ext"/></svg></a>
+      </div>
+    </div>
+  </section>
+
+  <aside class="manifest" id="manifest">
+    <div class="tabs mono">
+      <button class="tab on" data-tab="queue">QUEUE <span class="cnt" id="queueCount">0</span></button>
+      <button class="tab" data-tab="search">SEARCH</button>
+      <button class="tab-act" id="clearBtn" title="Clear deck"><svg class="ic"><use href="#i-trash"/></svg></button>
+    </div>
+    <div class="tabpane show" id="paneQueue">
+      <div class="q-tools mono">
+        <button class="qbtn" id="shuffleBtn" title="Shuffle"><svg class="ic"><use href="#i-shuffle"/></svg></button>
+        <button class="qbtn" id="repeatBtn" title="Repeat"><svg class="ic"><use href="#i-repeat"/></svg><span class="r1">1</span></button>
+        <span class="q-hint">TAP ROW TO PLAY</span>
+      </div>
+      <div id="queueList"></div>
+    </div>
+    <div class="tabpane" id="paneSearch">
+      <div class="search-status mono" id="searchStatus"></div>
+      <div id="resultsList"></div>
+    </div>
+  </aside>
+
+  <div class="backdrop" id="backdrop"></div>
+</main>
+
+<footer class="statusbar mono">
+  <div><span class="dot"></span>SYS OK · MEDIA <span id="stMedia">--</span> · MODE <span id="stMode">PARK</span></div>
+  <div>KEEP EYES ON THE ROAD — PASSENGER OPERATION ADVISED</div>
+  <div><span id="clock">00:00:00</span> LOCAL</div>
+</footer>
+
+<div class="dimmer" id="dimmer"></div>
+<div class="toasts" id="toastWrap"></div>
+<div class="vbadge mono" id="vbadge" hidden>LISTENING…</div>
+
+<div class="modal" id="keycard">
+  <div class="modal-card">
+    <div class="modal-head mono"><span>KEY COMMANDS</span><button id="keyClose"><svg class="ic"><use href="#i-x"/></svg></button></div>
+    <table class="keys mono">
+      <tr><td><kbd>SPACE</kbd><kbd>K</kbd></td><td>play / pause</td></tr>
+      <tr><td><kbd>J</kbd><kbd>←</kbd></td><td>back 10s / 5s</td></tr>
+      <tr><td><kbd>L</kbd><kbd>→</kbd></td><td>forward 10s / 5s</td></tr>
+      <tr><td><kbd>N</kbd> <kbd>P</kbd></td><td>next / previous track</td></tr>
+      <tr><td><kbd>↑</kbd><kbd>↓</kbd></td><td>volume up / down</td></tr>
+      <tr><td><kbd>M</kbd></td><td>mute</td></tr>
+      <tr><td><kbd>D</kbd></td><td>engage / disengage drive mode</td></tr>
+      <tr><td><kbd>/</kbd></td><td>focus the command line</td></tr>
+      <tr><td><kbd>?</kbd></td><td>this key card</td></tr>
+    </table>
+    <div class="modal-foot mono">VOICE · “play” “pause” “next” “previous” “louder” “quieter” “mute” “faster” “slower” “drive” “park”</div>
+  </div>
 </div>
 
 <script>
-/* ---------- State ---------- */
-const state = {
-  player:null,
-  ready:false,
-  queue:[],
-  history:JSON.parse(localStorage.getItem('cs_history')||'[]'),
-  saved:JSON.parse(localStorage.getItem('cs_saved')||'[]'),
-  currentIndex:-1,
-  apiKey:localStorage.getItem('cs_apikey')||'',
-  autoplay:localStorage.getItem('cs_autoplay')!=='false',
-  loop:localStorage.getItem('cs_loop')==='true',
-  quality:localStorage.getItem('cs_quality')||'auto',
-  currentVideo:null,
-  isMuted:false,
-  activeTab:'queue',
-  theaterMode:false,
+(function(){
+'use strict';
+var $ = function(s){ return document.getElementById(s); };
+
+/* ---------- refs ---------- */
+var cmdForm=$('command'), cmdInput=$('cmdInput'),
+    voiceBtn=$('voiceBtn'), vbadge=$('vbadge'), keyBtn=$('keyBtn'), keycard=$('keycard'), keyClose=$('keyClose'),
+    dimwrap=$('dimwrap'), dimBtn=$('dimBtn'), dimSlider=$('dimSlider'), dimVal=$('dimVal'), dimmer=$('dimmer'),
+    driveSwitch=$('driveSwitch'), driveLabel=$('driveLabel'), panelBtn=$('panelBtn'), backdrop=$('backdrop'),
+    screenEl=$('screenEl'), spool=$('spool'), plate=$('plate'), plateArt=$('plateArt'),
+    plateTitle=$('plateTitle'), plateAuthor=$('plateAuthor'), plateClock=$('plateClock'),
+    ignition=$('ignition'), igRing=$('igRing'), igChips=$('igChips'), passBtn=$('passBtn'), paxChip=$('paxChip'),
+    modeTag=$('modeTag'),
+    road=$('road'), roadFill=$('roadFill'), roadCar=$('roadCar'), roadTip=$('roadTip'),
+    prevBtn=$('prevBtn'), backBtn=$('backBtn'), playBtn=$('playBtn'), fwdBtn=$('fwdBtn'), nextBtn=$('nextBtn'),
+    playUse=$('playUse'), ringFg=$('ringFg'),
+    roElapsed=$('roElapsed'), roRemain=$('roRemain'), rateDown=$('rateDown'), rateUp=$('rateUp'), roRate=$('roRate'),
+    muteBtn=$('muteBtn'), volUse=$('volUse'), volSlider=$('volSlider'), roVol=$('roVol'), extLink=$('extLink'),
+    paneQueue=$('paneQueue'), paneSearch=$('paneSearch'), queueCount=$('queueCount'), clearBtn=$('clearBtn'),
+    shuffleBtn=$('shuffleBtn'), repeatBtn=$('repeatBtn'), queueList=$('queueList'),
+    searchStatus=$('searchStatus'), resultsList=$('resultsList'),
+    stMedia=$('stMedia'), stMode=$('stMode'), clockEl=$('clock'), toastWrap=$('toastWrap');
+
+var RING = 283; // 2*pi*45
+
+/* ---------- persistence ---------- */
+var K = {deck:'ab_deck', vol:'ab_vol', rate:'ab_rate', rep:'ab_rep', shuf:'ab_shuf', drive:'ab_drive', dim:'ab_dim'};
+function lsGet(k,d){ try{ var v=localStorage.getItem(k); return v==null?d:JSON.parse(v); }catch(e){ return d; } }
+function lsSet(k,v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} }
+
+var S = {
+  deck: lsGet(K.deck, []), pos: -1,
+  shuffle: !!lsGet(K.shuf,false), repeat: lsGet(K.rep,0),        // 0 off · 1 all · 2 one
+  drive: !!lsGet(K.drive,false), dim: lsGet(K.dim,0),
+  volume: lsGet(K.vol,80), rate: lsGet(K.rate,1),
+  playing:false, duration:0, muted:false, lastVol:80
 };
+var player=null, ytReady=false, ytLoading=false, scrubbing=false;
 
-/* Curated suggestions (no API key needed) */
-const suggestedVideos = [
-  {id:'aqz-KE-bpKQ', title:'Big Buck Bunny (Open Movie)', channel:'Blender Foundation', duration:'9:53'},
-  {id:'LXb3EKWsInQ', title:'Costa Rica in 4K', channel:'Jacob + Katie Schwarz', duration:'3:42'},
-  {id:'ZiXDOTxNkcc', title:'SpaceX Starship Launch', channel:'SpaceX', duration:'8:14'},
-  {id:'OPf0KEG6iY8', title:'Earth From Space — 4K', channel:'NASA', duration:'12:08'},
-  {id:'eRsGyueVL20', title:'How to Solar Power Your Home', channel:'This Old House', duration:'15:21'},
-  {id:'kJQP7kiw5Fk', title:'Despacito', channel:'Luis Fonsi', duration:'4:42'},
-  {id:'4kbgz7wph3E', title:'Tesla Model S Plaid Review', channel:'Engineering Explained', duration:'18:35'},
-  {id:'JGwWNGJdvx8', title:'Shape of You — Ed Sheeran', channel:'Ed Sheeran', duration:'4:24'},
-];
+/* ---------- helpers ---------- */
+function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];}); }
+function fmt(s){ s=Math.max(0,Math.floor(s||0)); var h=Math.floor(s/3600), m=Math.floor(s%3600/60), x=s%60;
+  return (h? h+':'+String(m).padStart(2,'0') : m) + ':' + String(x).padStart(2,'0'); }
+function toast(msg,kind){
+  var el=document.createElement('div'); el.className='toast'+(kind?' '+kind:''); el.textContent=msg;
+  toastWrap.appendChild(el);
+  requestAnimationFrame(function(){ el.classList.add('in'); });
+  setTimeout(function(){ el.classList.remove('in'); setTimeout(function(){ el.remove(); },300); },2800);
+}
+function jfetch(url,ms){
+  var c=new AbortController(), t=setTimeout(function(){ c.abort(); },ms||6000);
+  return fetch(url,{signal:c.signal}).then(function(r){ if(!r.ok) throw new Error('http'); return r.json(); })
+         .finally(function(){ clearTimeout(t); });
+}
 
-/* ---------- YouTube API ---------- */
-function onYouTubeIframeAPIReady(){
-  state.player = new YT.Player('player',{
-    width:'100%',height:'100%',
-    playerVars:{
-      autoplay:1,controls:1,modestbranding:1,rel:0,playsinline:1,iv_load_policy:3
-    },
+/* ---------- deck (queue) ---------- */
+function saveDeck(){ lsSet(K.deck, S.deck); }
+function cur(){ return (S.pos>=0 && S.pos<S.deck.length) ? S.deck[S.pos] : null; }
+
+function playItem(item){
+  hideIgnition();
+  var i = S.deck.findIndex(function(d){ return d.id===item.id; });
+  if(i>=0){ S.pos=i; }
+  else { S.deck.splice(S.pos+1,0,item); S.pos++; saveDeck(); }
+  startCurrent();
+}
+function playAt(i){ if(i<0||i>=S.deck.length) return; S.pos=i; hideIgnition(); startCurrent(); }
+
+function startCurrent(){
+  var it=cur(); if(!it) return;
+  renderDeck(); updateNow(); showSpool(true);
+  if(ytReady){ loadCurrent(); }
+  else { loadYT(); }
+}
+function loadCurrent(){
+  var it=cur(); if(!it) return;
+  player.loadVideoById(it.id);
+  player.setPlaybackRate(S.rate);
+  if(S.muted) player.mute(); else player.setVolume(S.volume);
+  syncMetaLoop();
+}
+function removeFrom(i){
+  var wasCur = (i===S.pos);
+  S.deck.splice(i,1);
+  if(i<S.pos) S.pos--;
+  saveDeck();
+  if(wasCur){
+    if(!S.deck.length){
+      S.pos=-1; try{ player.stopVideo(); }catch(e){}
+      S.playing=false; resetTransport(); updateNow(); renderDeck(); showIgnition(); showSpool(false);
+    } else { S.pos=Math.min(S.pos,S.deck.length-1); startCurrent(); }
+  } else { renderDeck(); }
+}
+function next(auto){
+  var n=S.deck.length; if(!n) return;
+  if(auto && S.repeat===2){ try{ player.seekTo(0,true); player.playVideo(); }catch(e){} return; }
+  var i=S.pos+1;
+  if(S.shuffle && n>1){ do{ i=Math.floor(Math.random()*n); }while(i===S.pos); }
+  if(i>=n){
+    if(auto && S.repeat!==1){
+      S.pos=0; try{ player.stopVideo(); }catch(e){}
+      S.playing=false; resetTransport(); updateNow(); renderDeck(); showIgnition(); showSpool(false);
+      toast('END OF DECK'); return;
+    }
+    i=0;
+  }
+  S.pos=i; startCurrent();
+}
+function prev(){
+  if(!S.deck.length) return;
+  if(player && ytReady && cur() && time()>3){ player.seekTo(0,true); paintTime(); return; }
+  S.pos = S.pos<=0 ? S.deck.length-1 : S.pos-1;
+  startCurrent();
+}
+function addToEnd(it){
+  if(S.deck.some(function(d){ return d.id===it.id; })){ toast('ALREADY ON DECK'); return; }
+  S.deck.push({id:it.id,title:it.title||'',author:it.author||'',duration:it.duration||0});
+  saveDeck(); renderDeck(); toast('ADDED TO DECK');
+}
+
+/* ---------- YouTube IFrame API ---------- */
+function loadYT(){
+  if(ytLoading) return; ytLoading=true;
+  var s=document.createElement('script'); s.src='https://www.youtube.com/iframe_api';
+  s.onerror=function(){ ytLoading=false; toast('YOUTUBE API FAILED — CHECK CONNECTION','bad'); showIgnition(); showSpool(false); };
+  document.head.appendChild(s);
+}
+window.onYouTubeIframeAPIReady = function(){
+  player = new YT.Player('yt-frame',{
+    videoId: (cur()||{}).id || '',
+    playerVars:{ controls:0, rel:0, playsinline:1, iv_load_policy:3, disablekb:1, fs:0, modestbranding:1 },
     events:{
-      onReady:()=>{state.ready=true;},
-      onStateChange:onPlayerStateChange,
-      onError:onPlayerError
+      onReady:function(){
+        ytReady=true; stMedia.textContent='YT';
+        player.setVolume(S.muted?0:S.volume); player.setPlaybackRate(S.rate);
+        if(cur()) loadCurrent();
+      },
+      onStateChange:onYTState,
+      onError:onYTError
     }
   });
-}
-
-function onPlayerStateChange(e){
-  const icon=document.getElementById('playPauseIcon');
-  if(e.data===YT.PlayerState.PLAYING){
-    icon.className='fas fa-pause';
-    document.getElementById('signalLabel').textContent='LIVE';
-    startProgress();
-  } else if(e.data===YT.PlayerState.PAUSED){
-    icon.className='fas fa-play';
-    document.getElementById('signalLabel').textContent='PAUSED';
-    stopProgress();
-  } else if(e.data===YT.PlayerState.BUFFERING){
-    document.getElementById('signalLabel').textContent='BUFFERING';
-  } else if(e.data===YT.PlayerState.ENDED){
-    icon.className='fas fa-play';
-    document.getElementById('signalLabel').textContent='ENDED';
-    stopProgress();
-    if(state.loop && state.currentVideo){
-      state.player.seekTo(0);
-      state.player.playVideo();
-    } else if(state.autoplay && state.currentIndex<state.queue.length-1){
-      playIndex(state.currentIndex+1);
-    }
+};
+function onYTState(e){
+  syncMeta();
+  var st=e.data;
+  if(st===YT.PlayerState.PLAYING){
+    S.playing=true; S.duration=player.getDuration()||S.duration; startRaf(); showSpool(false);
+  } else if(st===YT.PlayerState.ENDED){
+    S.playing=false; next(true);
+  } else {
+    S.playing=false;
   }
+  updateTransport();
 }
-function onPlayerError(e){
-  toast('Playback error. Video may be restricted or unavailable.','error');
-  document.getElementById('signalLabel').textContent='ERROR';
+function onYTError(e){
+  showSpool(false);
+  var c=e.data, msg = (c===101||c===150) ? 'OWNER DISABLED EMBEDDING — SKIPPING'
+                 : (c===100 ? 'VIDEO NOT FOUND — SKIPPING' : 'PLAYBACK ERROR — SKIPPING');
+  toast(msg,'bad');
+  if(S.deck.length>1) setTimeout(function(){ next(true); },900);
+  else { showIgnition(); }
 }
-
-/* ---------- Progress ---------- */
-let progressTimer=null;
-function startProgress(){
-  stopProgress();
-  progressTimer=setInterval(updateProgress,250);
-}
-function stopProgress(){
-  if(progressTimer){clearInterval(progressTimer);progressTimer=null;}
-}
-function updateProgress(){
-  if(!state.player||!state.currentVideo||!state.ready)return;
+function time(){ try{ return player.getCurrentTime()||0; }catch(e){ return 0; } }
+function syncMeta(){
   try{
-    const cur=state.player.getCurrentTime()||0;
-    const total=state.player.getDuration()||0;
-    if(total>0){
-      document.getElementById('progressBar').value=(cur/total)*100;
-      document.getElementById('currentTime').textContent=fmtTime(cur);
-      document.getElementById('duration').textContent=fmtTime(total);
+    var d=player.getVideoData(), it=cur();
+    if(it && d && d.title && it.title!==d.title){
+      it.title=d.title; it.author=d.author||it.author; saveDeck(); updateNow(); renderDeck(); return true;
     }
   }catch(e){}
+  return false;
 }
-function fmtTime(s){
-  if(!s||isNaN(s))return '00:00';
-  const m=Math.floor(s/60), sec=Math.floor(s%60), h=Math.floor(m/60);
-  if(h>0) return `${h}:${String(m%60).padStart(2,'0')}:${String(sec).padStart(2,'0')}`;
-  return `${m}:${String(sec).padStart(2,'0')}`;
+function syncMetaLoop(){
+  var n=0, iv=setInterval(function(){ if(syncMeta() || ++n>10) clearInterval(iv); },400);
 }
 
-/* ---------- Video parsing ---------- */
-function extractVideoId(input){
-  if(!input)return null;
-  input=input.trim();
-  if(/^[a-zA-Z0-9_-]{11}$/.test(input))return input;
-  const patterns=[
-    /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/|youtube\.com\/shorts\/|youtube\.com\/v\/|youtube\.com\/live\/)([a-zA-Z0-9_-]{11})/,
-    /[?&]v=([a-zA-Z0-9_-]{11})/
-  ];
-  for(const p of patterns){
-    const m=input.match(p);
-    if(m)return m[1];
+/* ---------- progress painting ---------- */
+var rafOn=false;
+function startRaf(){
+  if(rafOn) return; rafOn=true;
+  (function loop(){ if(!S.playing){ rafOn=false; return; } paintTime(); requestAnimationFrame(loop); })();
+}
+function paintTime(){
+  var t=time(), d=S.duration||0, p=d?Math.min(1,t/d):0;
+  roadFill.style.width=(p*100)+'%';
+  roadCar.style.left=(p*100)+'%';
+  ringFg.style.strokeDashoffset=String(RING*(1-p));
+  roElapsed.textContent=fmt(t);
+  roRemain.textContent=d?('-'+fmt(d-t)):'--:--';
+  plateClock.textContent=fmt(t);
+}
+function resetTransport(){
+  S.duration=0; S.playing=false;
+  roadFill.style.width='0%'; roadCar.style.left='0%';
+  ringFg.style.strokeDashoffset=String(RING);
+  playUse.setAttribute('href','#i-play');
+  roElapsed.textContent='00:00'; roRemain.textContent='--:--'; plateClock.textContent='00:00';
+}
+function updateTransport(){
+  playUse.setAttribute('href', S.playing?'#i-pause':'#i-play');
+  plate.classList.toggle('live',S.playing);
+  renderDeck();
+}
+
+/* ---------- scrub road ---------- */
+function roadRatio(e){
+  var r=road.getBoundingClientRect();
+  return Math.max(0,Math.min(1,(e.clientX-r.left)/r.width));
+}
+function scrubTo(e){
+  if(!S.duration||!player||!ytReady) return;
+  player.seekTo(roadRatio(e)*S.duration,true); paintTime();
+}
+road.addEventListener('pointerdown',function(e){
+  if(!player||!ytReady) return;
+  scrubbing=true; road.setPointerCapture(e.pointerId); scrubTo(e);
+});
+road.addEventListener('pointermove',function(e){
+  if(scrubbing){ scrubTo(e); }
+  if(S.duration){
+    var p=roadRatio(e);
+    roadTip.textContent=fmt(p*S.duration);
+    roadTip.style.left=Math.max(4,Math.min(96,p*100))+'%';
+    roadTip.classList.add('show');
+  }
+});
+road.addEventListener('pointerup',function(){ scrubbing=false; });
+road.addEventListener('pointercancel',function(){ scrubbing=false; });
+road.addEventListener('pointerleave',function(){ roadTip.classList.remove('show'); });
+
+/* ---------- transport buttons ---------- */
+function playPause(){
+  if(!player||!ytReady){
+    if(S.deck.length){ playAt(Math.max(S.pos,0)); }
+    else { toast('NOTHING ON DECK — PASTE A LINK OR SEARCH'); cmdInput.focus(); }
+    return;
+  }
+  if(S.playing) player.pauseVideo(); else player.playVideo();
+}
+function seekBy(d){
+  if(!player||!ytReady||!S.duration) return;
+  player.seekTo(Math.max(0,Math.min(S.duration,time()+d)),true); paintTime();
+}
+playBtn.addEventListener('click',playPause);
+prevBtn.addEventListener('click',prev);
+nextBtn.addEventListener('click',function(){ next(false); });
+backBtn.addEventListener('click',function(){ seekBy(-10); });
+fwdBtn.addEventListener('click',function(){ seekBy(10); });
+
+/* ---------- volume & rate ---------- */
+function setVolume(v){
+  v=Math.max(0,Math.min(100,Math.round(v)));
+  S.volume=v; S.muted=(v===0); lsSet(K.vol,v);
+  if(player&&ytReady){ player.setVolume(v); if(v===0) player.mute(); else player.unMute(); }
+  volSlider.value=v; roVol.textContent=String(v).padStart(3,'0');
+  volUse.setAttribute('href', S.muted?'#i-volx':'#i-vol');
+}
+function muteToggle(){
+  if(S.muted) setVolume(S.lastVol||70);
+  else { S.lastVol=S.volume||70; setVolume(0); }
+}
+volSlider.addEventListener('input',function(){ setVolume(+this.value); });
+muteBtn.addEventListener('click',muteToggle);
+
+var RATES=[0.5,0.75,1,1.25,1.5,1.75,2];
+function setRate(r){
+  S.rate=r; lsSet(K.rate,r);
+  if(player&&ytReady) player.setPlaybackRate(r);
+  roRate.textContent=r.toFixed(2)+'×';
+}
+function rateStep(d){
+  var i=RATES.indexOf(S.rate); if(i<0)i=2;
+  i=Math.max(0,Math.min(RATES.length-1,i+d)); setRate(RATES[i]);
+}
+rateDown.addEventListener('click',function(){ rateStep(-1); });
+rateUp.addEventListener('click',function(){ rateStep(1); });
+
+/* ---------- drive mode ---------- */
+function setDrive(on,silent){
+  S.drive=on; lsSet(K.drive,on);
+  document.body.classList.toggle('drive',on);
+  if(!on) document.body.classList.remove('pax');
+  driveSwitch.setAttribute('aria-pressed',String(on));
+  driveLabel.textContent=on?'DRIVE':'PARK';
+  modeTag.textContent=on?'DRIVE MODE':'PARK MODE';
+  stMode.textContent=on?'DRIVE':'PARK';
+  if(!silent){
+    toast(on?'DRIVE MODE ENGAGED — VIDEO SUPPRESSED, AUDIO ONLY':'PARK MODE — VIDEO RESTORED');
+    if(on){ screenEl.classList.remove('sweeping'); void screenEl.offsetWidth; screenEl.classList.add('sweeping'); }
+  }
+}
+driveSwitch.addEventListener('click',function(){ setDrive(!S.drive); });
+passBtn.addEventListener('click',function(){ document.body.classList.add('pax'); toast('PASSENGER VIEW — UNSAFE FOR THE DRIVER'); });
+paxChip.addEventListener('click',function(){ document.body.classList.remove('pax'); });
+
+/* ---------- now-playing plate ---------- */
+function updateNow(){
+  var it=cur();
+  if(!it){
+    plateTitle.textContent='NO SIGNAL'; plateAuthor.textContent='—';
+    plateArt.style.backgroundImage='none'; extLink.href='#';
+    document.title='AUTOBAHN — YouTube Cockpit'; return;
+  }
+  plateTitle.textContent=it.title||'IDENTIFYING SIGNAL…';
+  plateAuthor.textContent=(it.author||'UNKNOWN CHANNEL').toUpperCase();
+  plateArt.style.backgroundImage='url(https://i.ytimg.com/vi/'+it.id+'/mqdefault.jpg)';
+  extLink.href='https://www.youtube.com/watch?v='+it.id;
+  if(it.title) document.title=it.title+' — AUTOBAHN';
+}
+
+/* ---------- ignition / standby ---------- */
+function showIgnition(){ ignition.classList.add('show'); showSpool(false); }
+function hideIgnition(){ ignition.classList.remove('show'); }
+function showSpool(v){ spool.hidden=!v; }
+igRing.addEventListener('click',function(){
+  cmdInput.focus();
+  cmdForm.classList.remove('flash'); void cmdForm.offsetWidth; cmdForm.classList.add('flash');
+});
+
+var QUICK=[
+  {id:'jfKfPfyJRdk', title:'lofi hip hop radio — beats to relax/drive to', author:'Lofi Girl', hint:'LOFI RADIO'},
+  {id:'aqz-KE-bpKQ', title:'Big Buck Bunny — 60fps 4K open movie', author:'Blender', hint:'OPEN MOVIE'}
+];
+(function buildChips(){
+  if(S.deck.length){
+    var r=document.createElement('button'); r.className='chip';
+    r.innerHTML='<svg class="ic"><use href="#i-play"/></svg><span>RESUME DECK · '+S.deck.length+'</span>';
+    r.addEventListener('click',function(){ playAt(0); });
+    igChips.appendChild(r);
+  }
+  QUICK.forEach(function(q){
+    var b=document.createElement('button'); b.className='chip';
+    b.innerHTML='<svg class="ic"><use href="#i-play"/></svg><span>'+esc(q.hint)+'</span>';
+    b.addEventListener('click',function(){ playItem({id:q.id,title:q.title,author:q.author,duration:0}); });
+    igChips.appendChild(b);
+  });
+})();
+
+/* ---------- command line (paste or search) ---------- */
+function parseYT(input){
+  var s=input.trim();
+  if(/^[a-zA-Z0-9_-]{11}$/.test(s)) return s;
+  try{
+    var u=new URL(s.indexOf('://')>=0?s:'https://'+s);
+    if(u.hostname.indexOf('youtu.be')>=0 && u.pathname.length>1) return u.pathname.slice(1,12);
+    if(u.searchParams.get('v')) return u.searchParams.get('v').slice(0,11);
+    var m=u.pathname.match(/\/(embed|shorts|live|v)\/([a-zA-Z0-9_-]{11})/);
+    if(m) return m[2];
+  }catch(e){}
+  return null;
+}
+async function fetchMeta(id){
+  try{
+    var j=await jfetch('https://noembed.com/embed?url=https://www.youtube.com/watch?v='+id,5000);
+    if(j && j.title) return {title:j.title, author:j.author_name||'', duration:j.duration||0};
+  }catch(e){}
+  return null;
+}
+cmdForm.addEventListener('submit',function(e){
+  e.preventDefault();
+  var v=cmdInput.value.trim(); if(!v) return;
+  var id=parseYT(v);
+  if(id){
+    cmdInput.value='';
+    playItem({id:id,title:'',author:'',duration:0});
+    fetchMeta(id).then(function(m){
+      if(!m) return;
+      var it=S.deck.find(function(d){ return d.id===id; });
+      if(it && !it.title){
+        it.title=m.title; it.author=m.author||it.author; it.duration=m.duration||it.duration;
+        saveDeck(); updateNow(); renderDeck();
+      }
+    });
+  } else {
+    runSearch(v);
+  }
+});
+
+/* ---------- search (public Piped / Invidious mirrors, no keys) ---------- */
+var PIPED=['https://pipedapi.kavin.rocks','https://pipedapi.adminforge.de','https://api.piped.private.coffee','https://pipedapi.drgns.space'];
+var INV=['https://inv.nadeko.net','https://invidious.nerdvpn.de','https://yewtu.be','https://invidious.f5.si'];
+function dedupe(list){
+  var seen={}, out=[];
+  list.forEach(function(x){ if(x&&x.id&&!seen[x.id]){ seen[x.id]=1; out.push(x); } });
+  return out;
+}
+async function searchVideos(q){
+  var enc=encodeURIComponent(q), i, out, j;
+  for(i=0;i<PIPED.length;i++){
+    try{
+      j=await jfetch(PIPED[i]+'/search?q='+enc+'&filter=videos',6000);
+      out=(j.items||[]).map(function(x){
+        var m=(x.url||'').match(/[?&]v=([\w-]{11})/);
+        return m?{id:m[1],title:x.title,author:x.uploaderName||'',duration:x.duration||0}:null;
+      }).filter(Boolean);
+      if(out.length) return dedupe(out);
+    }catch(e){}
+  }
+  for(i=0;i<INV.length;i++){
+    try{
+      j=await jfetch(INV[i]+'/api/v1/search?q='+enc+'&type=video',6000);
+      out=(Array.isArray(j)?j:[]).map(function(x){
+        return x&&x.videoId?{id:x.videoId,title:x.title,author:x.author||'',duration:x.lengthSeconds||0}:null;
+      }).filter(Boolean);
+      if(out.length) return dedupe(out);
+    }catch(e){}
   }
   return null;
 }
-
-function loadVideo(id,title='Loading...',channel=''){
-  if(!state.ready||!state.player){
-    return setTimeout(()=>loadVideo(id,title,channel),300);
-  }
-  document.getElementById('emptyState').style.display='none';
-  state.player.loadVideoById(id);
-  if(state.quality!=='auto'){
-    setTimeout(()=>{try{state.player.setPlaybackQuality(state.quality);}catch(e){}},600);
-  }
-  state.currentVideo={id,title,channel};
-  document.getElementById('nowPlayingTitle').textContent=title;
-  document.getElementById('nowPlayingChannel').textContent=channel||'YouTube';
-  addToHistory({id,title,channel});
-  renderSidebar();
-  toast('Now playing: '+title,'success');
+function setStatus(txt,kind){ searchStatus.className='search-status show'+(kind?' '+kind:''); searchStatus.innerHTML=txt; }
+var searchToken=0;
+async function runSearch(q){
+  var tok=++searchToken;
+  switchTab('search');
+  resultsList.innerHTML='';
+  setStatus('SCANNING PUBLIC MIRRORS','busy');
+  var res=await searchVideos(q);
+  if(tok!==searchToken) return;
+  if(!res){ setStatus('ALL MIRRORS UNREACHABLE.<br>PASTE A DIRECT YOUTUBE LINK INSTEAD — THAT ALWAYS WORKS.','err'); return; }
+  setStatus(res.length+' RESULTS — TAP TO PLAY · + TO QUEUE');
+  renderResults(res);
+}
+function renderResults(items){
+  resultsList.innerHTML='';
+  items.forEach(function(it){
+    var row=document.createElement('div'); row.className='rrow';
+    row.innerHTML=
+      '<div class="rthumb"><img loading="lazy" alt="" src="https://i.ytimg.com/vi/'+it.id+'/mqdefault.jpg">'+
+      '<span class="rdur mono">'+(it.duration?fmt(it.duration):'LIVE')+'</span></div>'+
+      '<div class="rmeta"><div class="rtitle">'+esc(it.title)+'</div><div class="rauthor mono">'+esc(it.author)+'</div></div>'+
+      '<button class="radd" title="Add to deck"><svg class="ic"><use href="#i-plus"/></svg></button>';
+    row.addEventListener('click',function(){ playItem({id:it.id,title:it.title,author:it.author,duration:it.duration}); });
+    row.querySelector('.radd').addEventListener('click',function(e){ e.stopPropagation(); addToEnd(it); });
+    resultsList.appendChild(row);
+  });
 }
 
-function addToHistory(v){
-  state.history=state.history.filter(x=>x.id!==v.id);
-  state.history.unshift(v);
-  state.history=state.history.slice(0,50);
-  localStorage.setItem('cs_history',JSON.stringify(state.history));
-}
-function addToQueue(v){
-  if(state.queue.find(x=>x.id===v.id)){toast('Already in queue','info');return false;}
-  state.queue.push(v);
-  renderSidebar();
-  toast('Added to queue','success');
-  return true;
-}
-function playIndex(i){
-  if(i<0||i>=state.queue.length)return;
-  state.currentIndex=i;
-  const v=state.queue[i];
-  loadVideo(v.id,v.title,v.channel);
-}
-function removeFromQueue(i){
-  state.queue.splice(i,1);
-  if(state.currentIndex>=i)state.currentIndex--;
-  renderSidebar();
-}
-function removeFromSaved(id){
-  state.saved=state.saved.filter(v=>v.id!==id);
-  localStorage.setItem('cs_saved',JSON.stringify(state.saved));
-  renderSidebar();
-  toast('Removed','info');
-}
-function addToQueueAndPlay(v){
-  if(addToQueue(v)){
-    const idx=state.queue.findIndex(x=>x.id===v.id);
-    if(idx>=0)playIndex(idx);
-  } else {
-    // Already in queue — just play it
-    const idx=state.queue.findIndex(x=>x.id===v.id);
-    if(idx>=0)playIndex(idx);
-  }
-}
-function loadDemoVideo(){
-  addToQueueAndPlay(suggestedVideos[0]);
-}
-
-/* ---------- Sidebar ---------- */
-function renderSidebar(){
-  const c=document.getElementById('sidebarContent');
-  let html='';
-  if(state.activeTab==='queue'){
-    if(!state.queue.length){
-      html=`<div class="flex flex-col items-center justify-center h-full text-center p-6">
-        <i class="fas fa-list-ul text-4xl text-gray-700 mb-3"></i>
-        <p class="text-sm text-gray-500">Queue is empty</p>
-        <p class="text-xs text-gray-600 mt-1">Pick from the suggested feed below</p>
-      </div>`;
-    } else {
-      html=state.queue.map((v,i)=>`
-        <div class="video-item ${state.currentIndex===i?'active':''} flex items-center gap-3 p-3 cursor-pointer" onclick="playIndex(${i})">
-          <div class="text-xs font-mono text-gray-500 w-6">${String(i+1).padStart(2,'0')}</div>
-          <div class="w-14 h-9 rounded overflow-hidden bg-black/40 flex-shrink-0">
-            <img src="https://i.ytimg.com/vi/${v.id}/default.jpg" class="w-full h-full object-cover" onerror="this.style.display='none'">
-          </div>
-          <div class="flex-1 min-w-0">
-            <p class="text-sm font-medium truncate">${esc(v.title)}</p>
-            <p class="text-[11px] text-gray-500 truncate">${esc(v.channel||'YouTube')}</p>
-          </div>
-          <button onclick="event.stopPropagation();removeFromQueue(${i})" class="text-gray-500 hover:text-red-400 p-1">
-            <i class="fas fa-times text-xs"></i>
-          </button>
-        </div>`).join('');
-    }
-  } else if(state.activeTab==='history'){
-    if(!state.history.length){
-      html=`<div class="flex flex-col items-center justify-center h-full text-center p-6">
-        <i class="fas fa-clock-rotate-left text-4xl text-gray-700 mb-3"></i>
-        <p class="text-sm text-gray-500">No history yet</p>
-      </div>`;
-    } else {
-      html=state.history.map(v=>`
-        <div class="video-item flex items-center gap-3 p-3 cursor-pointer" onclick="loadVideo('${v.id}',${JSON.stringify(v.title)},${JSON.stringify(v.channel||'')})">
-          <div class="w-14 h-9 rounded overflow-hidden bg-black/40 flex-shrink-0">
-            <img src="https://i.ytimg.com/vi/${v.id}/default.jpg" class="w-full h-full object-cover" onerror="this.style.display='none'">
-          </div>
-          <div class="flex-1 min-w-0">
-            <p class="text-sm font-medium truncate">${esc(v.title)}</p>
-            <p class="text-[11px] text-gray-500 truncate">${esc(v.channel||'YouTube')}</p>
-          </div>
-        </div>`).join('');
-    }
-  } else if(state.activeTab==='saved'){
-    if(!state.saved.length){
-      html=`<div class="flex flex-col items-center justify-center h-full text-center p-6">
-        <i class="fas fa-bookmark text-4xl text-gray-700 mb-3"></i>
-        <p class="text-sm text-gray-500">No saved videos</p>
-        <p class="text-xs text-gray-600 mt-1">Press the bookmark icon while playing</p>
-      </div>`;
-    } else {
-      html=state.saved.map(v=>`
-        <div class="video-item flex items-center gap-3 p-3 cursor-pointer" onclick="loadVideo('${v.id}',${JSON.stringify(v.title)},${JSON.stringify(v.channel||'')})">
-          <div class="w-14 h-9 rounded overflow-hidden bg-black/40 flex-shrink-0">
-            <img src="https://i.ytimg.com/vi/${v.id}/default.jpg" class="w-full h-full object-cover" onerror="this.style.display='none'">
-          </div>
-          <div class="flex-1 min-w-0">
-            <p class="text-sm font-medium truncate">${esc(v.title)}</p>
-            <p class="text-[11px] text-gray-500 truncate">${esc(v.channel||'YouTube')}</p>
-          </div>
-          <button onclick="event.stopPropagation();removeFromSaved('${v.id}')" class="text-gray-500 hover:text-red-400 p-1">
-            <i class="fas fa-times text-xs"></i>
-          </button>
-        </div>`).join('');
-    }
-  }
-  c.innerHTML=html;
-}
-function esc(s){return String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
-
-/* ---------- Suggested ---------- */
-function renderSuggested(){
-  const g=document.getElementById('suggestedGrid');
-  g.innerHTML=suggestedVideos.map(v=>`
-    <div class="video-item rounded-lg overflow-hidden cursor-pointer glass" onclick='addToQueueAndPlay(${JSON.stringify(v)})'>
-      <div class="relative aspect-video bg-black/40">
-        <img src="https://i.ytimg.com/vi/${v.id}/hqdefault.jpg" class="w-full h-full object-cover" onerror="this.parentElement.style.background='#1a1a25'">
-        <div class="absolute bottom-1 right-1 bg-black/80 px-1.5 py-0.5 rounded text-[10px] font-mono">${v.duration}</div>
-        <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 hover:opacity-100 transition flex items-center justify-center">
-          <i class="fas fa-play-circle text-3xl text-red-500"></i>
-        </div>
-      </div>
-      <div class="p-2">
-        <p class="text-xs font-medium truncate">${esc(v.title)}</p>
-        <p class="text-[11px] text-gray-500 truncate">${esc(v.channel)}</p>
-      </div>
-    </div>`).join('');
-}
-
-/* ---------- Toasts ---------- */
-function toast(msg,type='info'){
-  const c=document.getElementById('toastContainer');
-  const colors={success:'border-green-500 text-green-400',error:'border-red-500 text-red-400',info:'border-blue-500 text-blue-400'};
-  const icons={success:'fa-circle-check',error:'fa-circle-exclamation',info:'fa-circle-info'};
-  const t=document.createElement('div');
-  t.className=`toast glass border ${colors[type]} px-4 py-3 rounded-lg flex items-center gap-2 text-sm max-w-xs`;
-  t.innerHTML=`<i class="fas ${icons[type]}"></i><span>${esc(msg)}</span>`;
-  c.appendChild(t);
-  setTimeout(()=>t.remove(),3000);
-}
-
-/* ---------- Search ---------- */
-async function searchYouTube(q){
-  if(!state.apiKey){
-    toast('Configure your YouTube API key in settings','info');
+/* ---------- deck rendering ---------- */
+function renderDeck(){
+  queueCount.textContent=S.deck.length;
+  queueCount.style.display=S.deck.length?'':'none';
+  queueList.innerHTML='';
+  if(!S.deck.length){
+    queueList.innerHTML='<div class="q-empty mono">DECK EMPTY<br>PASTE A LINK OR SEARCH</div>';
     return;
   }
-  const sc=document.getElementById('sidebarContent');
-  sc.innerHTML=`<div class="flex items-center justify-center h-full"><div class="loader-ring w-8 h-8 rounded-full"></div></div>`;
-  try{
-    const r=await fetch(`https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&maxResults=25&q=${encodeURIComponent(q)}&key=${state.apiKey}`);
-    const d=await r.json();
-    if(d.error){toast('API Error: '+(d.error.message||'unknown'),'error');renderSidebar();return;}
-    if(!d.items||!d.items.length){toast('No results','info');renderSidebar();return;}
-    sc.innerHTML=d.items.map(it=>`
-      <div class="video-item flex items-center gap-3 p-3 cursor-pointer" onclick="loadVideo('${it.id.videoId}',${JSON.stringify(it.snippet.title)},${JSON.stringify(it.snippet.channelTitle)})">
-        <div class="w-14 h-9 rounded overflow-hidden bg-black/40 flex-shrink-0">
-          <img src="${it.snippet.thumbnails.default.url}" class="w-full h-full object-cover">
-        </div>
-        <div class="flex-1 min-w-0">
-          <p class="text-sm font-medium truncate">${esc(it.snippet.title)}</p>
-          <p class="text-[11px] text-gray-500 truncate">${esc(it.snippet.channelTitle)}</p>
-        </div>
-      </div>`).join('');
-  }catch(e){
-    toast('Search failed. Check connection.','error');
-    renderSidebar();
-  }
+  S.deck.forEach(function(it,i){
+    var row=document.createElement('div');
+    row.className='qrow'+(i===S.pos?' cur':'');
+    row.innerHTML=
+      '<div class="q-idx mono">'+(i===S.pos?'<span class="q-live"><i></i><i></i><i></i></span>':String(i+1).padStart(2,'0'))+'</div>'+
+      '<div class="q-meta"><div class="q-title">'+esc(it.title||'IDENTIFYING…')+'</div>'+
+      '<div class="q-author mono">'+esc(it.author||'—')+'</div></div>'+
+      '<div class="q-dur mono">'+(it.duration?fmt(it.duration):'--:--')+'</div>'+
+      '<button class="q-x" title="Remove"><svg class="ic"><use href="#i-x"/></svg></button>';
+    if(i!==S.pos) row.addEventListener('click',function(){ playAt(i); });
+    row.querySelector('.q-x').addEventListener('click',function(e){ e.stopPropagation(); removeFrom(i); });
+    queueList.appendChild(row);
+  });
 }
 
-/* ---------- Events ---------- */
-document.getElementById('loadBtn').addEventListener('click',()=>{
-  const inp=document.getElementById('urlInput');
-  const id=extractVideoId(inp.value);
-  if(id){
-    addToQueueAndPlay({id,title:'YouTube Video',channel:''});
-    inp.value='';
-  } else {
-    toast('Invalid YouTube URL or ID','error');
-  }
+/* ---------- tabs / tools ---------- */
+document.querySelectorAll('.tab').forEach(function(t){
+  t.addEventListener('click',function(){ switchTab(t.dataset.tab); });
 });
-document.getElementById('urlInput').addEventListener('keydown',e=>{
-  if(e.key==='Enter')document.getElementById('loadBtn').click();
-});
-document.getElementById('searchInput').addEventListener('keydown',e=>{
-  if(e.key==='Enter'&&e.target.value.trim())searchYouTube(e.target.value.trim());
-});
-
-document.querySelectorAll('.tab-btn').forEach(b=>{
-  b.addEventListener('click',()=>{
-    document.querySelectorAll('.tab-btn').forEach(x=>x.classList.remove('active'));
-    b.classList.add('active');
-    state.activeTab=b.dataset.tab;
-    renderSidebar();
-  });
-});
-
-document.getElementById('playPauseBtn').addEventListener('click',()=>{
-  if(!state.player||!state.currentVideo){toast('Load a video first','info');return;}
-  const s=state.player.getPlayerState();
-  if(s===YT.PlayerState.PLAYING)state.player.pauseVideo();
-  else state.player.playVideo();
-});
-document.getElementById('nextBtn').addEventListener('click',()=>{
-  if(state.currentIndex<state.queue.length-1)playIndex(state.currentIndex+1);
-  else toast('End of queue','info');
-});
-document.getElementById('prevBtn').addEventListener('click',()=>{
-  if(state.currentIndex>0)playIndex(state.currentIndex-1);
-  else toast('Already at first','info');
-});
-document.getElementById('loopBtn').addEventListener('click',()=>{
-  state.loop=!state.loop;
-  localStorage.setItem('cs_loop',state.loop);
-  const lb=document.getElementById('loopBtn');
-  const lt=document.getElementById('loopToggle');
-  if(state.loop){
-    lb.classList.add('bg-red-500/20','text-red-400');
-    lt.classList.add('on');
-    toast('Loop enabled','success');
-  } else {
-    lb.classList.remove('bg-red-500/20','text-red-400');
-    lt.classList.remove('on');
-    toast('Loop disabled','info');
-  }
-});
-document.getElementById('muteBtn').addEventListener('click',()=>{
-  if(!state.player)return;
-  state.isMuted=!state.isMuted;
-  if(state.isMuted){state.player.mute();document.getElementById('muteIcon').className='fas fa-volume-xmark';}
-  else{state.player.unMute();document.getElementById('muteIcon').className='fas fa-volume-high';}
-});
-document.getElementById('progressBar').addEventListener('input',e=>{
-  if(!state.player||!state.currentVideo)return;
-  const total=state.player.getDuration();
-  if(total>0)state.player.seekTo((e.target.value/100)*total,true);
-});
-
-document.querySelectorAll('.speed-btn').forEach(b=>{
-  b.addEventListener('click',()=>{
-    const sp=parseFloat(b.dataset.speed);
-    if(state.player&&state.currentVideo)state.player.setPlaybackRate(sp);
-    document.querySelectorAll('.speed-btn').forEach(x=>x.classList.remove('active'));
-    b.classList.add('active');
-    toast('Speed: '+sp+'×','info');
-  });
-});
-
-document.getElementById('saveBtn').addEventListener('click',()=>{
-  if(!state.currentVideo){toast('No video to save','info');return;}
-  if(state.saved.find(v=>v.id===state.currentVideo.id)){toast('Already saved','info');return;}
-  state.saved.push(state.currentVideo);
-  localStorage.setItem('cs_saved',JSON.stringify(state.saved));
-  document.getElementById('saveIcon').className='fas fa-bookmark text-red-400';
-  toast('Saved to favorites','success');
-  if(state.activeTab==='saved')renderSidebar();
-});
-
-document.getElementById('shareBtn').addEventListener('click',()=>{
-  if(!state.currentVideo)return;
-  const url='https://youtu.be/'+state.currentVideo.id;
-  navigator.clipboard?.writeText(url).then(()=>toast('Link copied','success'))
-    .catch(()=>toast('Link: '+url,'info'));
-});
-
-document.getElementById('fullscreenBtn').addEventListener('click',()=>{
-  const el=document.getElementById('playerWrapper');
-  if(!document.fullscreenElement)el.requestFullscreen?.();
-  else document.exitFullscreen?.();
-});
-
-document.getElementById('theaterBtn').addEventListener('click',()=>{
-  state.theaterMode=!state.theaterMode;
-  const sb=document.getElementById('sidebar');
-  sb.style.display=state.theaterMode?'none':'flex';
-  document.querySelector('#theaterBtn i').className=state.theaterMode?'fas fa-expand':'fas fa-compress';
-});
-
-/* Settings */
-document.getElementById('settingsBtn').addEventListener('click',()=>{
-  const m=document.getElementById('settingsModal');
-  m.classList.remove('hidden');m.classList.add('flex');
-  document.getElementById('apiKeyInput').value=state.apiKey;
-});
-document.getElementById('closeSettings').addEventListener('click',()=>{
-  const m=document.getElementById('settingsModal');
-  m.classList.add('hidden');m.classList.remove('flex');
-});
-document.getElementById('configApiBtn').addEventListener('click',()=>document.getElementById('settingsBtn').click());
-document.getElementById('apiKeyInput').addEventListener('input',e=>{
-  state.apiKey=e.target.value.trim();
-  localStorage.setItem('cs_apikey',state.apiKey);
-  updateApiStatus();
-});
-function updateApiStatus(){
-  const t=document.getElementById('apiStatusText');
-  if(state.apiKey){t.textContent='Active';t.className='text-green-400';}
-  else{t.textContent='Not configured';t.className='text-yellow-400';}
+function switchTab(name){
+  document.querySelectorAll('.tab').forEach(function(t){ t.classList.toggle('on',t.dataset.tab===name); });
+  paneQueue.classList.toggle('show',name==='queue');
+  paneSearch.classList.toggle('show',name==='search');
 }
-document.getElementById('autoplayToggle').addEventListener('click',()=>{
-  state.autoplay=!state.autoplay;
-  localStorage.setItem('cs_autoplay',state.autoplay);
-  document.getElementById('autoplayToggle').classList.toggle('on',state.autoplay);
-  toast('Autoplay '+(state.autoplay?'on':'off'),'info');
-});
-document.getElementById('loopToggle').addEventListener('click',()=>document.getElementById('loopBtn').click());
-document.getElementById('qualitySelect').addEventListener('change',e=>{
-  state.quality=e.target.value;
-  localStorage.setItem('cs_quality',state.quality);
-  if(state.player&&state.currentVideo)state.player.setPlaybackQuality(state.quality);
-});
-document.getElementById('clearDataBtn').addEventListener('click',()=>{
-  if(!confirm('Clear all saved data, history, and settings?'))return;
-  localStorage.clear();location.reload();
-});
-document.getElementById('dismissSafety').addEventListener('click',()=>document.getElementById('safetyNotice').style.display='none');
+function paintModeBtns(){
+  shuffleBtn.classList.toggle('on',S.shuffle);
+  repeatBtn.classList.toggle('on',S.repeat>0);
+  repeatBtn.querySelector('.r1').style.display=(S.repeat===2)?'block':'none';
+  repeatBtn.title=['Repeat off','Repeat all','Repeat one'][S.repeat];
+}
+shuffleBtn.addEventListener('click',function(){ S.shuffle=!S.shuffle; lsSet(K.shuf,S.shuffle); paintModeBtns(); toast(S.shuffle?'SHUFFLE ON':'SHUFFLE OFF'); });
+repeatBtn.addEventListener('click',function(){ S.repeat=(S.repeat+1)%3; lsSet(K.rep,S.repeat); paintModeBtns(); toast(['REPEAT OFF','REPEAT ALL','REPEAT ONE'][S.repeat]); });
 
-/* Keyboard shortcuts */
-document.addEventListener('keydown',e=>{
-  if(e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA')return;
-  if(!state.player||!state.currentVideo)return;
+var clearArm=null;
+clearBtn.addEventListener('click',function(){
+  if(!S.deck.length){ toast('DECK ALREADY EMPTY'); return; }
+  if(clearArm){
+    clearTimeout(clearArm); clearArm=null; clearBtn.classList.remove('arm');
+    S.deck=[]; S.pos=-1; saveDeck();
+    try{ player&&player.stopVideo(); }catch(e){}
+    S.playing=false; resetTransport(); updateNow(); renderDeck(); showIgnition();
+    toast('DECK CLEARED');
+  } else {
+    clearBtn.classList.add('arm'); toast('TAP AGAIN TO CLEAR DECK');
+    clearArm=setTimeout(function(){ clearArm=null; clearBtn.classList.remove('arm'); },2600);
+  }
+});
+
+/* ---------- night dim ---------- */
+function applyDim(v){ S.dim=v; lsSet(K.dim,v); dimmer.style.opacity=(v/100); dimVal.textContent=v+'%'; dimSlider.value=v; }
+dimBtn.addEventListener('click',function(){ dimwrap.classList.toggle('open'); });
+dimSlider.addEventListener('input',function(){ applyDim(+this.value); });
+document.addEventListener('click',function(e){ if(!dimwrap.contains(e.target)) dimwrap.classList.remove('open'); });
+
+/* ---------- key card ---------- */
+function openKeycard(){ keycard.classList.add('show'); }
+function closeKeycard(){ keycard.classList.remove('show'); }
+keyBtn.addEventListener('click',openKeycard);
+keyClose.addEventListener('click',closeKeycard);
+keycard.addEventListener('click',function(e){ if(e.target===keycard) closeKeycard(); });
+
+/* ---------- panel (small screens) ---------- */
+panelBtn.addEventListener('click',function(){ document.body.classList.toggle('panel-open'); });
+backdrop.addEventListener('click',function(){ document.body.classList.remove('panel-open'); });
+
+/* ---------- voice control (local Web Speech, no services) ---------- */
+var SR=window.SpeechRecognition||window.webkitSpeechRecognition, rec=null, voiceOn=false, vbT=null;
+function vbadgeSay(t){
+  vbadge.hidden=false; vbadge.textContent='“'+t+'”';
+  clearTimeout(vbT); vbT=setTimeout(function(){ if(voiceOn) vbadge.textContent='LISTENING…'; },2000);
+}
+function handleVoice(t){
+  vbadgeSay(t);
+  if(/play|resume/.test(t)){ if(!S.playing) playPause(); }
+  else if(/pause|stop|hold/.test(t)){ if(S.playing) playPause(); }
+  else if(/next/.test(t)) next(false);
+  else if(/previous|prior|last song/.test(t)) prev();
+  else if(/drive/.test(t)) setDrive(true);
+  else if(/park/.test(t)) setDrive(false);
+  else if(/louder|volume up/.test(t)) setVolume(S.volume+10);
+  else if(/quieter|volume down/.test(t)) setVolume(S.volume-10);
+  else if(/mute/.test(t)) muteToggle();
+  else if(/faster/.test(t)) rateStep(1);
+  else if(/slower/.test(t)) rateStep(-1);
+  else vbadge.textContent='NO MATCH';
+}
+if(!SR){
+  voiceBtn.classList.add('dead'); voiceBtn.title='Voice control not supported in this browser';
+} else {
+  rec=new SR(); rec.lang='en-US'; rec.continuous=true; rec.interimResults=false; rec.maxAlternatives=1;
+  rec.onresult=function(e){ handleVoice(e.results[e.results.length-1][0].transcript.trim().toLowerCase()); };
+  rec.onerror=function(e){ if(e.error==='not-allowed'||e.error==='service-not-allowed'){ stopVoice(); toast('MIC ACCESS DENIED','bad'); } };
+  rec.onend=function(){ if(voiceOn){ try{ rec.start(); }catch(e){} } };
+}
+function startVoice(){
+  voiceOn=true; voiceBtn.classList.add('on');
+  vbadge.hidden=false; vbadge.textContent='LISTENING…';
+  try{ rec.start(); toast('VOICE LINK ACTIVE — SAY “NEXT”, “PAUSE”, “DRIVE”…'); }
+  catch(e){ stopVoice(); toast('VOICE LINK UNAVAILABLE','bad'); }
+}
+function stopVoice(){ voiceOn=false; voiceBtn.classList.remove('on'); vbadge.hidden=true; try{ rec&&rec.stop(); }catch(e){} }
+voiceBtn.addEventListener('click',function(){ if(!SR){ toast('VOICE NOT SUPPORTED HERE','bad'); return; } voiceOn?stopVoice():startVoice(); });
+
+/* ---------- keyboard ---------- */
+document.addEventListener('keydown',function(e){
+  var tag=(e.target.tagName||'').toLowerCase();
+  var typing=(tag==='input'||tag==='textarea');
+  if(e.key==='Escape'){ closeKeycard(); dimwrap.classList.remove('open'); document.body.classList.remove('panel-open'); if(typing) e.target.blur(); return; }
+  if(typing) return;
+  if(e.key==='?'){ e.preventDefault(); openKeycard(); return; }
+  if(e.key==='/'){ e.preventDefault(); cmdInput.focus(); cmdInput.select(); return; }
   switch(e.key){
-    case ' ':e.preventDefault();
-      const s=state.player.getPlayerState();
-      if(s===YT.PlayerState.PLAYING)state.player.pauseVideo();else state.player.playVideo();
-      break;
-    case 'ArrowRight':state.player.seekTo(state.player.getCurrentTime()+10,true);break;
-    case 'ArrowLeft':state.player.seekTo(Math.max(0,state.player.getCurrentTime()-10),true);break;
-    case 'ArrowUp':state.player.setVolume(Math.min(100,state.player.getVolume()+10));break;
-    case 'ArrowDown':state.player.setVolume(Math.max(0,state.player.getVolume()-10));break;
-    case 'n':case 'N':document.getElementById('nextBtn').click();break;
-    case 'p':case 'P':document.getElementById('prevBtn').click();break;
-    case 'm':case 'M':document.getElementById('muteBtn').click();break;
+    case ' ': case 'k': case 'K': e.preventDefault(); playPause(); break;
+    case 'j': case 'J': seekBy(-10); break;
+    case 'l': case 'L': seekBy(10); break;
+    case 'ArrowLeft': e.preventDefault(); seekBy(-5); break;
+    case 'ArrowRight': e.preventDefault(); seekBy(5); break;
+    case 'ArrowUp': e.preventDefault(); setVolume(S.volume+5); break;
+    case 'ArrowDown': e.preventDefault(); setVolume(S.volume-5); break;
+    case 'n': case 'N': next(false); break;
+    case 'p': case 'P': prev(); break;
+    case 'd': case 'D': setDrive(!S.drive); break;
+    case 'm': case 'M': muteToggle(); break;
   }
 });
+/* keep Space from re-triggering the last clicked button */
+document.addEventListener('click',function(e){ var b=e.target.closest('button'); if(b) b.blur(); });
 
-/* Init */
-document.getElementById('qualitySelect').value=state.quality;
-if(state.loop){
-  document.getElementById('loopBtn').classList.add('bg-red-500/20','text-red-400');
-  document.getElementById('loopToggle').classList.add('on');
-}
-if(!state.autoplay)document.getElementById('autoplayToggle').classList.remove('on');
-updateApiStatus();
-renderSidebar();
-renderSuggested();
+/* ---------- clock ---------- */
+setInterval(function(){ clockEl.textContent=new Date().toTimeString().slice(0,8); },1000);
+clockEl.textContent=new Date().toTimeString().slice(0,8);
 
-/* Auto-hide safety after 12s */
-setTimeout(()=>{const n=document.getElementById('safetyNotice');if(n)n.style.transition='opacity .6s';n.style.opacity='0';setTimeout(()=>n.style.display='none',700);},12000);
-
-/* Expose inline handlers */
-window.loadVideo=loadVideo;
-window.playIndex=playIndex;
-window.removeFromQueue=removeFromQueue;
-window.addToQueueAndPlay=addToQueueAndPlay;
-window.loadDemoVideo=loadDemoVideo;
-window.removeFromSaved=removeFromSaved;
+/* ---------- boot ---------- */
+setDrive(S.drive,true);
+setVolume(S.volume);
+setRate(S.rate);
+applyDim(S.dim);
+paintModeBtns();
+renderDeck();
+updateNow();
+resetTransport();
+setStatus('TYPE IN THE COMMAND LINE AND HIT ENTER —<br>OR PASTE A DIRECT YOUTUBE LINK');
+showIgnition();
+})();
 </script>
 </body>
 </html>
