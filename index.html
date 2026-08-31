@@ -42,7 +42,8 @@ body::before{content:'';position:fixed;top:0;left:0;right:0;bottom:0;z-index:0;p
 .tab.active::after{content:'';position:absolute;bottom:-1px;left:0;right:0;height:2px;background:var(--accent);box-shadow:0 0 8px var(--accent)}
 .sb-content{flex:1;overflow-y:auto;padding:16px;display:none}
 .sb-content.active{display:block}
-/* Video Container for Overlay */
+
+/* Video Container */
 .video-container {
     flex:1;
     position:relative;
@@ -52,38 +53,72 @@ body::before{content:'';position:fixed;top:0;left:0;right:0;bottom:0;z-index:0;p
     justify-content:center;
     width:100%;
     height:100%;
+    overflow: hidden;
 }
 iframe {
     width:100%;
     height:100%;
     border:none;
+    display: block;
 }
-/* Overlay for Play Interaction */
-.play-overlay {
+
+/* Thumbnail / Click Area */
+.thumbnail-overlay {
     position: absolute;
-    top:0; left:0; right:0; bottom:0;
-    background: rgba(0,0,0,0.4);
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: #000;
+    cursor: pointer;
+    z-index: 5;
     display: flex;
     align-items: center;
     justify-content: center;
-    z-index: 5;
-    cursor: pointer;
-    transition: opacity 0.3s;
+    transition: opacity 0.3s ease;
 }
-.play-btn {
-    width: 60px;
-    height: 60px;
-    background: var(--accent);
+.thumbnail-overlay.hidden {
+    opacity: 0;
+    pointer-events: none;
+}
+.thumbnail-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    opacity: 0.7;
+}
+.play-icon {
+    position: absolute;
+    width: 80px;
+    height: 80px;
+    background: rgba(255,45,77,0.9);
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 0 30px var(--glow);
+    box-shadow: 0 0 40px rgba(255,45,77,0.6);
+    z-index: 6;
     transition: transform 0.2s;
 }
-.play-btn:hover { transform: scale(1.1); }
-.play-btn svg { width: 24px; height: 24px; fill: white; margin-left: 4px; }
-.hidden { opacity: 0; pointer-events: none; }
+.play-icon svg { width: 32px; height: 32px; fill: white; margin-left: 4px; }
+.play-icon:hover { transform: scale(1.1); }
+
+/* Sidebar styles */
+.sidebar-item {
+    padding: 12px;
+    border-bottom: 1px solid var(--border);
+    font-size: 13px;
+    color: var(--fg);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.sidebar-item img {
+    width: 60px;
+    height: 45px;
+    object-fit: cover;
+    border-radius: 4px;
+}
 </style>
 </head>
 <body>
@@ -113,7 +148,7 @@ iframe {
                 <button class="tab" onclick="switchTab('settings')">Settings</button>
             </div>
             <div id="queue" class="sb-content active">
-                <div style="color:var(--muted);text-align:center;margin-top:20px;font-size:12px;">Loading...</div>
+                <div style="color:var(--muted);text-align:center;margin-top:20px;font-size:12px;">Queue is empty.</div>
             </div>
             <div id="settings" class="sb-content">
                 <div style="padding:10px 0;">
@@ -125,14 +160,18 @@ iframe {
         </div>
 
         <div class="video-container">
-            <div class="play-overlay" id="playOverlay">
-                <div class="play-btn">
+            <!-- Thumbnail Overlay -->
+            <div id="thumbnailOverlay" class="thumbnail-overlay">
+                <img id="thumbImg" class="thumbnail-img" src="" alt="Video Thumbnail">
+                <div class="play-icon">
                     <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
                 </div>
             </div>
+            
+            <!-- Iframe (Hidden initially) -->
             <iframe id="ytPlayer" 
                 src="" 
-                allow="autoplay; encrypted-media; fullscreen" 
+                allow="autoplay; encrypted-media; fullscreen; picture-in-picture" 
                 allowfullscreen>
             </iframe>
         </div>
@@ -143,7 +182,8 @@ iframe {
     const input = document.getElementById('urlInput');
     const loadBtn = document.getElementById('loadBtn');
     const iframe = document.getElementById('ytPlayer');
-    const overlay = document.getElementById('playOverlay');
+    const overlay = document.getElementById('thumbnailOverlay');
+    const thumbImg = document.getElementById('thumbImg');
     const loopCheck = document.getElementById('loopCheck');
 
     function extractVideoId(url) {
@@ -155,32 +195,40 @@ iframe {
     function loadVideo() {
         const url = input.value;
         const videoId = extractVideoId(url);
+        
         if (videoId) {
-            // Clear iframe to reset state
-            iframe.src = "";
-            // Force reflow
-            void iframe.offsetWidth;
+            // 1. Set Thumbnail
+            thumbImg.src = `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`;
             
-            // Construct URL with parameters for better mobile/tesla compatibility
-            const newSrc = `https://www.youtube.com/embed/${videoId}?autoplay=0&mute=1&controls=1&playsinline=1&enablejsapi=1`;
-            iframe.src = newSrc;
-            
-            // Show overlay again waiting for user click
+            // 2. Reset Overlay
             overlay.classList.remove('hidden');
+            
+            // 3. Clear previous iframe to force a clean state
+            iframe.src = "";
+            
+            // 4. Prepare new iframe src (Muted is key for Tesla)
+            // We don't load it yet until the user clicks the overlay
+            iframe.dataset.src = `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1&controls=1&playsinline=1&enablejsapi=1&loop=1&playlist=${videoId}`;
+            
         } else {
             alert("Invalid YouTube URL");
         }
     }
 
+    // Load button click
     loadBtn.addEventListener('click', loadVideo);
     
-    // Handle overlay click to allow autoplay
+    // Input enter key
+    input.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') loadVideo();
+    });
+
+    // Overlay click: This is the "User Gesture" Tesla requires
     overlay.addEventListener('click', () => {
-        overlay.classList.add('hidden');
-        // Optional: Try to unmute if user clicks (some browsers require interaction)
-        // Note: Tesla's specific mute logic can be tricky. Usually keeping it muted 
-        // and relying on the "click to play" interaction is the most robust way 
-        // to bypass the "Driving Mode" block.
+        if (iframe.dataset.src) {
+            iframe.src = iframe.dataset.src;
+            overlay.classList.add('hidden');
+        }
     });
 
     function switchTab(tabName) {
